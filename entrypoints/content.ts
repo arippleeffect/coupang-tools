@@ -1,7 +1,5 @@
-import { waitElement } from "@1natsu/wait-element";
-
-const RETURN_MGT_URL =
-  "https://wing.coupang.com/tenants/rfm/goldfish/vendor-return/mgt";
+import { MENU } from "./background";
+import * as XLSX from "xlsx";
 
 function ensureToast() {
   if (document.getElementById("ct-toast")) return;
@@ -20,11 +18,9 @@ function ensureToast() {
   }
   const wrap = document.createElement("div");
   wrap.id = "ct-toast";
-  // 🔒 고정 크기(내용과 무관)
   wrap.style.width = "200px"; // 원하는 너비
   wrap.style.height = "80px"; // 원하는 높이
   wrap.style.boxSizing = "border-box";
-  // (선택) 내용 넘침 방지/말줄임
   wrap.style.overflow = "hidden";
   wrap.innerHTML = `
     <div class="ct-title">수집 진행 중…</div>
@@ -64,81 +60,164 @@ function finishToast(ok: boolean, finalCount: number) {
   setTimeout(() => t.remove(), 2500);
 }
 
+const getCookieValue = (key: string): string => {
+  return (
+    document.cookie
+      .split("; ")
+      .find((row) => row.startsWith(`${key}=`))
+      ?.split("=")[1] || ""
+  );
+};
+
+const fetchItemList = async ({
+  pageSize,
+  pageIndex,
+  token,
+}: {
+  pageSize: number;
+  pageIndex: number;
+  token: string;
+}): Promise<Response> => {
+  return fetch(
+    "https://wing.coupang.com/tenants/rfm/goldfish/vendor-return/itemList",
+    {
+      headers: {
+        accept: "application/json, text/plain, */*",
+        "content-type": "application/json",
+        "x-xsrf-token": decodeURIComponent(token),
+      },
+      referrer:
+        "https://wing.coupang.com/tenants/rfm/goldfish/vendor-return/creation",
+      body: JSON.stringify({ pageSize, pageIndex }),
+      method: "POST",
+      credentials: "include",
+    }
+  );
+};
+
+async function collectItems(pageSize: number): Promise<any[]> {
+  const results: any[] = [];
+  let pageIndex = 0;
+
+  while (true) {
+    const token = getCookieValue("XSRF-TOKEN");
+    try {
+      const res = await fetchItemList({ pageSize, pageIndex, token });
+
+      if (!res.ok) {
+        finishToast(false, results.length);
+        break;
+      }
+
+      const data = await res.json();
+      const items = Array.isArray(data?.content) ? data.content : [];
+
+      if (!items.length) {
+        finishToast(true, results.length);
+        break;
+      }
+
+      results.push(...items);
+      updateToast(results.length, pageIndex, pageIndex, data.totalPages);
+
+      // 한 페이지에 pageSize보다 적게 오면 마지막 페이지로 판단하고 종료
+      if (items.length < pageSize) {
+        finishToast(true, results.length);
+        break;
+      }
+
+      // 다음 페이지로 증가
+      pageIndex += 1;
+    } catch (e) {
+      console.warn("요청 중 예외 발생 - 중단합니다.", e);
+      finishToast(false, results.length);
+      break;
+    }
+  }
+  return results;
+}
+
+const Ee = (t: string) => t.startsWith("XRC") || t.startsWith("CHA9");
+
 export default defineContentScript({
   matches: ["https://wing.coupang.com/*"],
   main() {
-    browser.runtime.onMessage.addListener(async (msg, sender) => {
-      if (msg.step === 1) {
+    browser.runtime.onMessage.addListener(async (msg) => {
+      if (msg.type === MENU.ROCKETGROSS_EXPORT_EXCEL) {
         ensureToast();
-        const results: any[] = [];
         const pageSize = 50;
-        let pageIndex = 0;
+        const results = await collectItems(pageSize);
+        const c = new Set([
+          "SFSCH1",
+          "INC20",
+          "SFAYG10",
+          "SFNYJ2",
+          "SFCHJ1",
+          "SFNHN1",
+          "SFISN5",
+          "SFGWJ1",
+          "SFWBS2",
+          "SFGMP1",
+          "SFISN1",
+          "SFBSN5",
+          "SFDJN2",
+          "SFNYJ3",
+          "SFYAT1",
+          "SFJEJ1",
+          "SFNGH2",
+          "SFWDG1",
+          "SFBUC3",
+          "SFCHA1",
+          "SFGNP1",
+          "SFDJN3",
+        ]);
 
-        while (true) {
-          // 쿠키에서 XSRF-TOKEN 추출
-          const xsrfToken =
-            document.cookie
-              .split("; ")
-              .find((row) => row.startsWith("XSRF-TOKEN="))
-              ?.split("=")[1] || "";
-
-          try {
-            const res = await fetch(
-              "https://wing.coupang.com/tenants/rfm/goldfish/vendor-return/itemList",
-              {
-                headers: {
-                  accept: "application/json, text/plain, */*",
-                  "content-type": "application/json",
-                  "x-xsrf-token": decodeURIComponent(xsrfToken),
-                },
-                referrer:
-                  "https://wing.coupang.com/tenants/rfm/goldfish/vendor-return/creation",
-                body: JSON.stringify({ pageSize, pageIndex }),
-                method: "POST",
-                credentials: "include",
-              }
-            );
-
-            if (!res.ok) {
-              console.warn("요청 실패 - 중단합니다.", pageIndex, res.status);
-              finishToast(false, results.length);
-              break; // 실패 시 중단
-            }
-
-            const data = await res.json();
-            const items = Array.isArray(data?.content) ? data.content : [];
-
-            if (!items.length) {
-              // 더 이상 아이템이 없으면 종료
-              finishToast(true, results.length);
-              break;
-            }
-
-            results.push(...items);
-            updateToast(results.length, pageIndex, pageIndex, data.totalPages);
-
-            // 한 페이지에 pageSize보다 적게 오면 마지막 페이지로 판단하고 종료
-            if (items.length < pageSize) {
-              finishToast(true, results.length);
-              break;
-            }
-
-            // 다음 페이지로 증가
-            pageIndex += 1;
-          } catch (e) {
-            console.warn("요청 중 예외 발생 - 중단합니다.", e);
-            finishToast(false, results.length);
-            break; // 예외 시 중단
+        const filteredList = results.map((item) => {
+          if (!Object.keys(item.returnableQtyByFCTotal).some((g) => c.has(g))) {
+            return item;
           }
-        }
 
-        // === Excel(CSV) 다운로드: FC별로 행 분리 ===
+          let S: string | null = null;
+          for (const g in item.returnableQtyByFCTotal) {
+            if (Ee(g)) {
+              S = g;
+              break;
+            }
+          }
+
+          if (!S) {
+            S = "CHA9";
+            item.returnableQtyByFCTotal[S] = {
+              qty: 0,
+              fcName: "CHA9",
+            };
+          }
+
+          Object.keys(item.returnableQtyByFCTotal)
+            .filter((g) => c.has(g))
+            .forEach((g) => {
+              const W = item.returnableQtyByFCTotal[g];
+              item.returnableQtyByFCTotal[S!].qty += W?.qty ?? 0;
+            });
+
+          Object.keys(item.returnableQtyByFCTotal)
+            .filter((g) => c.has(g))
+            .forEach((g) => {
+              delete item.returnableQtyByFCTotal[g];
+            });
+
+          return item;
+        });
+
+        console.log("filteredList::", filteredList);
+
         try {
           const rows: any[] = [];
           const safe = (v: any) => (v == null ? "" : String(v));
 
-          for (const it of results) {
+          for (const it of filteredList) {
             const fcMap = it?.returnableQtyByFCTotal || {};
+
             const entries = Object.entries(fcMap) as [string, any][];
 
             if (entries.length === 0) {
@@ -189,7 +268,6 @@ export default defineContentScript({
             }
           }
 
-          // CSV 생성
           const headers = [
             "vendorItemId",
             "vendorInventoryId",
@@ -205,26 +283,26 @@ export default defineContentScript({
             "returnableQtyTotal",
           ];
 
-          const toCsvCell = (s: string) => {
-            // 셀에 콤마/따옴표/개행 있으면 CSV 규격에 맞게 이스케이프
-            if (s == null) return "";
-            if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
-            return s;
-          };
-
-          const csv = [headers.join(",")]
-            .concat(
-              rows.map((r) =>
-                headers
-                  .map((h) => toCsvCell(String((r as any)[h] ?? "")))
-                  .join(",")
+          const ws = XLSX.utils.json_to_sheet(rows, { header: headers });
+          const colWidths = headers.map((h) => ({
+            wch: Math.min(
+              60,
+              Math.max(
+                String(h).length + 2,
+                ...rows.map((r) => String((r as any)[h] ?? "").length + 2)
               )
-            )
-            .join("\n");
+            ),
+          }));
+          (ws as any)["!cols"] = colWidths;
 
-          const blob = new Blob(["\ufeff" + csv], {
-            type: "text/csv;charset=utf-8",
-          }); // BOM 포함 → 엑셀 한글 깨짐 방지
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "반출목록");
+
+          const xlsxArray = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+          const blob = new Blob([xlsxArray], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
+
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           const ts = new Date();
