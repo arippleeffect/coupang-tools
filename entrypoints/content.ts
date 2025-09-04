@@ -120,7 +120,6 @@ async function collectItems(pageSize: number): Promise<any[]> {
       results.push(...items);
       updateToast(results.length, pageIndex, pageIndex, data.totalPages);
 
-      // 한 페이지에 pageSize보다 적게 오면 마지막 페이지로 판단하고 종료
       if (items.length < pageSize) {
         finishToast(true, results.length);
         break;
@@ -137,7 +136,34 @@ async function collectItems(pageSize: number): Promise<any[]> {
   return results;
 }
 
-const Ee = (t: string) => t.startsWith("XRC") || t.startsWith("CHA9");
+// 쿠팡윙 creation2.js에 위치함
+const fcCodesToMerge = new Set([
+  "SFSCH1",
+  "INC20",
+  "SFAYG10",
+  "SFNYJ2",
+  "SFCHJ1",
+  "SFNHN1",
+  "SFISN5",
+  "SFGWJ1",
+  "SFWBS2",
+  "SFGMP1",
+  "SFISN1",
+  "SFBSN5",
+  "SFDJN2",
+  "SFNYJ3",
+  "SFYAT1",
+  "SFJEJ1",
+  "SFNGH2",
+  "SFWDG1",
+  "SFBUC3",
+  "SFCHA1",
+  "SFGNP1",
+  "SFDJN3",
+]);
+
+const isRepresentativeFcCode = (t: string) =>
+  t.startsWith("XRC") || t.startsWith("CHA9");
 
 export default defineContentScript({
   matches: ["https://wing.coupang.com/*"],
@@ -147,69 +173,47 @@ export default defineContentScript({
         ensureToast();
         const pageSize = 50;
         const results = await collectItems(pageSize);
-        const c = new Set([
-          "SFSCH1",
-          "INC20",
-          "SFAYG10",
-          "SFNYJ2",
-          "SFCHJ1",
-          "SFNHN1",
-          "SFISN5",
-          "SFGWJ1",
-          "SFWBS2",
-          "SFGMP1",
-          "SFISN1",
-          "SFBSN5",
-          "SFDJN2",
-          "SFNYJ3",
-          "SFYAT1",
-          "SFJEJ1",
-          "SFNGH2",
-          "SFWDG1",
-          "SFBUC3",
-          "SFCHA1",
-          "SFGNP1",
-          "SFDJN3",
-        ]);
 
         const filteredList = results.map((item) => {
-          if (!Object.keys(item.returnableQtyByFCTotal).some((g) => c.has(g))) {
+          if (
+            !Object.keys(item.returnableQtyByFCTotal).some((g) =>
+              fcCodesToMerge.has(g)
+            )
+          ) {
             return item;
           }
 
-          let S: string | null = null;
-          for (const g in item.returnableQtyByFCTotal) {
-            if (Ee(g)) {
-              S = g;
+          let primaryFcCode: string | null = null;
+          for (const fcCode in item.returnableQtyByFCTotal) {
+            if (isRepresentativeFcCode(fcCode)) {
+              primaryFcCode = fcCode;
               break;
             }
           }
 
-          if (!S) {
-            S = "CHA9";
-            item.returnableQtyByFCTotal[S] = {
+          if (!primaryFcCode) {
+            primaryFcCode = "CHA9";
+            item.returnableQtyByFCTotal[primaryFcCode] = {
               qty: 0,
               fcName: "CHA9",
             };
           }
 
           Object.keys(item.returnableQtyByFCTotal)
-            .filter((g) => c.has(g))
+            .filter((g) => fcCodesToMerge.has(g))
             .forEach((g) => {
               const W = item.returnableQtyByFCTotal[g];
-              item.returnableQtyByFCTotal[S!].qty += W?.qty ?? 0;
+              item.returnableQtyByFCTotal[primaryFcCode!].qty += W?.qty ?? 0;
             });
 
           Object.keys(item.returnableQtyByFCTotal)
-            .filter((g) => c.has(g))
+            .filter((g) => fcCodesToMerge.has(g))
             .forEach((g) => {
               delete item.returnableQtyByFCTotal[g];
             });
 
           return item;
         });
-
-        console.log("filteredList::", filteredList);
 
         try {
           const rows: any[] = [];
@@ -221,7 +225,6 @@ export default defineContentScript({
             const entries = Object.entries(fcMap) as [string, any][];
 
             if (entries.length === 0) {
-              // FC 정보가 없으면 빈 FC로 1행
               rows.push({
                 vendorItemId: safe(it.vendorItemId),
                 vendorInventoryId: safe(it.vendorInventoryId),
