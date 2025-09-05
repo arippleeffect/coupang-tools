@@ -7,6 +7,6 @@ export default defineConfig({
   manifest: {
     name: "coupang-tools",
     version: "1.0",
-    permissions: ["contextMenus", "webRequest"],
+    permissions: ["contextMenus", "webRequest", "cookies"],
   },
 });

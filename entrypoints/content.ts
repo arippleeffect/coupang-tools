@@ -166,8 +166,8 @@ const isRepresentativeFcCode = (t: string) =>
   t.startsWith("XRC") || t.startsWith("CHA9");
 
 export default defineContentScript({
-  matches: ["https://wing.coupang.com/*"],
-  main() {
+  matches: ["https://wing.coupang.com/*", "https://www.coupang.com/*"],
+  main(ctx) {
     browser.runtime.onMessage.addListener(async (msg) => {
       if (msg.type === MENU.ROCKETGROSS_EXPORT_EXCEL) {
         ensureToast();
@@ -326,6 +326,27 @@ export default defineContentScript({
         }
 
         return;
+      }
+
+      if (msg.type === MENU.VIEW_PRODUCT_METRICS) {
+        const productList = document.getElementById("product-list");
+        console.log("productList::", productList);
+        const liTags = productList?.getElementsByTagName("li");
+
+        const aTags = productList?.getElementsByTagName("a");
+        if (!aTags || aTags.length === 0) {
+          return;
+        }
+
+        const hrefs = Array.from(aTags).map((el) => el.getAttribute("href"));
+        const productIds = hrefs.map((item) => {
+          if (!item) {
+            return;
+          }
+          const match = item.match(/products\/(\d+)/);
+          return match ? match[1] : null;
+        });
+        console.log("test::", productIds);
       }
     });
   },
