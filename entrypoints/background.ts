@@ -2,12 +2,19 @@ export enum MENU {
   ROCKETGROSS_EXPORT_EXCEL = "ROCKETGROSS_EXPORT_EXCEL",
   VIEW_PRODUCT_METRICS = "VIEW_PRODUCT_METRICS",
   GET_PRODUCT = "GET_PRODUCT",
+  INIT = "INIT",
 }
 
 export default defineBackground(() => {
   browser.contextMenus.create({
     id: MENU.ROCKETGROSS_EXPORT_EXCEL,
     title: "로켓그로스 반출 액셀 다운로드",
+    contexts: ["page"],
+  });
+
+  browser.contextMenus.create({
+    id: MENU.VIEW_PRODUCT_METRICS,
+    title: "쿠팡 상품 지표보기",
     contexts: ["page"],
   });
 
@@ -156,4 +163,8 @@ export default defineBackground(() => {
       }
     }
   );
+
+  browser.webNavigation.onHistoryStateUpdated.addListener((details) => {
+    browser.tabs.sendMessage(details.tabId, { type: MENU.INIT });
+  });
 });

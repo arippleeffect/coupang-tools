@@ -5,9 +5,9 @@ export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   manifestVersion: 3,
   manifest: {
-    name: "coupang-tools",
+    name: "쿠팡 도구 모음",
     version: "1.0",
-    permissions: ["contextMenus", "webRequest", "cookies"],
+    permissions: ["contextMenus", "webRequest", "cookies", "webNavigation"],
     host_permissions: ["https://wing.coupang.com/*"],
   },
 });
