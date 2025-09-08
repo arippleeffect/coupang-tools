@@ -8,5 +8,6 @@ export default defineConfig({
     name: "coupang-tools",
     version: "1.0",
     permissions: ["contextMenus", "webRequest", "cookies"],
+    host_permissions: ["https://wing.coupang.com/*"],
   },
 });

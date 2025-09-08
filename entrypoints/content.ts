@@ -64,7 +64,7 @@ function ensureMetricsStyle() {
   const style = document.createElement("style");
   style.id = styleId;
   style.textContent = `
-    .ct-metrics{position:absolute;right:8px;bottom:8px;left:auto;max-width:78%;z-index:2;pointer-events:none}
+    .ct-metrics{display:block;max-width:100%;z-index:auto;pointer-events:none}
     .ct-metrics .wrap{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:12px;background:rgba(28,28,30,.82);box-shadow:0 8px 24px rgba(0,0,0,.25);color:#fff;backdrop-filter:saturate(140%) blur(10px);-webkit-backdrop-filter:saturate(140%) blur(10px);border:1px solid rgba(255,255,255,.12)}
     .ct-metrics .metric{display:flex;gap:8px;justify-content:space-between;align-items:baseline;font-size:12px;line-height:1.5}
     .ct-metrics .label{opacity:.8}
@@ -85,6 +85,8 @@ function ensureMetricsStyle() {
       .ct-metrics .chip.sales{background:rgba(255,149,0,.16);color:#ff9500;border:1px solid rgba(255,149,0,.35);text-shadow:none}
       .ct-metrics .chip.rate{background:rgba(52,199,89,.16);color:#34c759;border:1px solid rgba(52,199,89,.35);text-shadow:none}
     }
+    .ProductUnit_productUnit__Qd6sv > a{display:flex;flex-direction:column}
+    .ProductUnit_productUnit__Qd6sv > a > .ct-metrics{margin-top:auto}
   `;
   document.head.appendChild(style);
 }
@@ -713,29 +715,34 @@ export default defineContentScript({
           const state: Record<string, ProductState> = {};
 
           function renderProductBox(st: ProductState) {
-            const el = document.querySelector<HTMLElement>(
-              `[data-id="${st.dataId}"]:not(:has(.AdMark_adMark__KPMsC))`
+            const els = document.querySelectorAll<HTMLElement>(
+              `[data-id="${st.dataId}"]`
             );
-            if (!el) return;
-            let box = el.querySelector<HTMLElement>(".ct-metrics");
-            if (!box) {
-              box = document.createElement("div");
-              box.className = "ct-metrics";
-              el.appendChild(box);
-            }
-            if (st.status === "LOADING") {
-              box.innerHTML = `
+            els.forEach((el) => {
+              let box = el.querySelector<HTMLElement>(".ct-metrics");
+              if (!box) {
+                box = document.createElement("div");
+                box.className = "ct-metrics";
+                const aTag = el.querySelector("a");
+                if (aTag) {
+                  aTag.appendChild(box);
+                } else {
+                  el.appendChild(box);
+                }
+              }
+              if (st.status === "LOADING") {
+                box.innerHTML = `
                 <div class="wrap">
                   <div class="metric loading"><span class="spinner"></span></div>
                 </div>`;
-            } else if (st.status === "COMPLETE" && st.data) {
-              box.innerHTML = `
+              } else if (st.status === "COMPLETE" && st.data) {
+                box.innerHTML = `
                 <div class="wrap">
                  <div class="metric"><span class="label">노출상품ID</span><span class="value">${
                    st.productId
                  }</span></div>
                   <div class="metric"><span class="label">브랜드</span><span class="value">${
-                    st.data.brandName
+                    st.data.brandName ?? ""
                   }</span></div>
                   <div class="metric"><span class="label">조회수</span><span class="value chip pv">${st.data.pv.toLocaleString()}</span></div>
                   <div class="metric"><span class="label">판매량</span><span class="value chip sales">${st.data.sales.toLocaleString()}</span></div>
@@ -743,90 +750,91 @@ export default defineContentScript({
                     st.data.rate
                   }</span></div>
                 </div>`;
-            } else if (st.status === "FAIL") {
-              box.innerHTML = `
+              } else if (st.status === "FAIL") {
+                box.innerHTML = `
         <div class="wrap">
           <div class="metric">
             <button class="retry-btn">🔄 재시도</button>
           </div>
         </div>`;
 
-              const btn = box.querySelector<HTMLButtonElement>(".retry-btn");
-              if (btn) {
-                ["click", "mousedown", "mouseup"].forEach((evt) => {
-                  btn.addEventListener(evt, (ev) => {
-                    ev.preventDefault();
-                    ev.stopPropagation();
+                const btn = box.querySelector<HTMLButtonElement>(".retry-btn");
+                if (btn) {
+                  ["click", "mousedown", "mouseup"].forEach((evt) => {
+                    btn.addEventListener(evt, (ev) => {
+                      ev.preventDefault();
+                      ev.stopPropagation();
+                    });
                   });
-                });
-                btn.addEventListener("click", async () => {
-                  console.log("click");
-                  // 다시 LOADING 상태로
-                  setProductState(st.dataId, (s) => {
-                    s.status = "LOADING";
-                    s.data = undefined;
-                  });
-
-                  try {
-                    const retryResp = await browser.runtime.sendMessage({
-                      type: MENU.GET_PRODUCT,
-                      keyword: st.productId,
+                  btn.addEventListener("click", async () => {
+                    console.log("click");
+                    // 다시 LOADING 상태로
+                    setProductState(st.dataId, (s) => {
+                      s.status = "LOADING";
+                      s.data = undefined;
                     });
 
-                    if (retryResp.ok) {
-                      console.log("retryResp::", retryResp);
-                      const retryResult =
-                        (retryResp.data?.result as CoupangProduct[]) || [];
-                      const matched = retryResult.find(
-                        (r) => String(r.productId) === String(st.productId)
-                      );
+                    try {
+                      const retryResp = await browser.runtime.sendMessage({
+                        type: MENU.GET_PRODUCT,
+                        keyword: st.productId,
+                      });
 
-                      if (matched) {
-                        setProductState(st.dataId, (s) => {
-                          s.status = "COMPLETE";
-                          s.data = {
-                            brandName: matched.brandName,
-                            pv: matched.pvLast28Day,
-                            sales: matched.salesLast28d,
-                            rate:
-                              matched.pvLast28Day > 0
-                                ? (
-                                    (matched.salesLast28d /
-                                      matched.pvLast28Day) *
-                                    100
-                                  ).toFixed(2) + "%"
-                                : "-",
-                          };
-                        });
+                      if (retryResp.ok) {
+                        console.log("retryResp::", retryResp);
+                        const retryResult =
+                          (retryResp.data?.result as CoupangProduct[]) || [];
+                        const matched = retryResult.find(
+                          (r) => String(r.productId) === String(st.productId)
+                        );
+
+                        if (matched) {
+                          setProductState(st.dataId, (s) => {
+                            s.status = "COMPLETE";
+                            s.data = {
+                              brandName: matched.brandName,
+                              pv: matched.pvLast28Day,
+                              sales: matched.salesLast28d,
+                              rate:
+                                matched.pvLast28Day > 0
+                                  ? (
+                                      (matched.salesLast28d /
+                                        matched.pvLast28Day) *
+                                      100
+                                    ).toFixed(2) + "%"
+                                  : "-",
+                            };
+                          });
+                        } else {
+                          setProductState(st.dataId, (s) => {
+                            s.status = "EMPTY";
+                          });
+                        }
                       } else {
                         setProductState(st.dataId, (s) => {
-                          s.status = "EMPTY";
+                          s.status = "FAIL";
                         });
                       }
-                    } else {
+                    } catch (e) {
                       setProductState(st.dataId, (s) => {
-                        s.status = "FAIL";
+                        s.status = "EMPTY";
                       });
                     }
-                  } catch (e) {
-                    setProductState(st.dataId, (s) => {
-                      s.status = "EMPTY";
-                    });
-                  }
-                });
-                btn.addEventListener("mouseenter", (ev) => {
-                  ev.stopPropagation();
-                });
-                btn.addEventListener("mouseover", (ev) => {
-                  ev.stopPropagation();
-                });
-              }
-            } else {
-              box.innerHTML = `
+                  });
+                  btn.addEventListener("mouseenter", (ev) => {
+                    ev.stopPropagation();
+                  });
+                  btn.addEventListener("mouseover", (ev) => {
+                    ev.stopPropagation();
+                  });
+                }
+              } else {
+                box.innerHTML = `
                 <div class="wrap">
                   <div class="metric"><span class="label">데이터 없음</span></div>
                 </div>`;
-            }
+              }
+            });
           }
 
           function setProductState(
@@ -844,7 +852,6 @@ export default defineContentScript({
             dataId: string | null;
             productId: string | null;
           }[] = Array.from(liTags)
-            .filter((el) => !el.querySelector(".AdMark_adMark__KPMsC"))
             .map((el) => {
               const aTag = el.children[0].getAttribute("href");
               const match = aTag?.match(/products\/(\d+)/);
@@ -1026,47 +1033,6 @@ export default defineContentScript({
               });
             }
           });
-
-          return;
-
-          console.log("noDataStates::", noDataStates);
-          if (noDataStates.length) {
-            const retryIds = noDataStates.map((st) => st.productId);
-            try {
-              const retryResp = await browser.runtime.sendMessage({
-                type: MENU.GET_PRODUCT,
-                productIds: retryIds,
-              });
-              const retryResult =
-                (retryResp.data?.result as CoupangProduct[]) || [];
-              noDataStates.forEach((st) => {
-                const matched = retryResult.find(
-                  (r) => String(r.productId) === String(st.productId)
-                );
-                if (matched) {
-                  setProductState(st.dataId, (s) => {
-                    s.status = "COMPLETE";
-                    s.data = {
-                      brandName: matched.brandName,
-                      pv: matched.pvLast28Day,
-                      sales: matched.salesLast28d,
-                      rate:
-                        matched.pvLast28Day > 0
-                          ? (
-                              (matched.salesLast28d / matched.pvLast28Day) *
-                              100
-                            ).toFixed(2) + "%"
-                          : "-",
-                    };
-                  });
-                }
-              });
-            } catch (e) {
-              console.warn("Retry request failed", e);
-            }
-          }
-
-          //
 
           return;
         } finally {
