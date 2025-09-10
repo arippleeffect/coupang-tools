@@ -53,7 +53,10 @@ export function Fail({
     <div className="wrap">
       <div className="metric">
         <button
-          className="retry-btn"
+          className="retry-btn w-full"
+          style={{
+            width: "100%",
+          }}
           data-dataid={dataId}
           onClick={(e) => {
             e.preventDefault();

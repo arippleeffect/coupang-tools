@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import * as R from "remeda";
 import { renderErrorToast } from "@/modlues/ui/toastRenderer";
 import * as ReactDOM from "react-dom/client";
 const rootMap = new WeakMap<HTMLElement, ReactDOM.Root>();
@@ -35,8 +36,6 @@ function exportProductsToExcel(products: ProductState[]) {
       sales: p.data?.sales ?? "",
       rate: p.data?.rate ?? "",
     }));
-
-  console.log("normalRows::", normalRows);
 
   const wb = XLSX.utils.book_new();
   if (normalRows.length > 0) {
@@ -109,65 +108,36 @@ function setupProductsBanner(ctx: any, products: ProductState[]) {
       },
     });
   }
-
-  updateBanner();
-
-  return new Proxy(products, {
-    set(target, prop, value) {
-      (target as any)[prop] = value;
-      updateBanner();
-      return true;
-    },
-    get(target, prop, receiver) {
-      const v = Reflect.get(target, prop, receiver);
-      const mutationMethods = [
-        "push",
-        "pop",
-        "shift",
-        "unshift",
-        "splice",
-        "sort",
-        "reverse",
-        "copyWithin",
-        "fill",
-      ];
-      if (typeof v === "function" && mutationMethods.includes(prop as string)) {
-        return function (...args: any[]) {
-          const result = v.apply(target, args);
-          updateBanner();
-          return result;
-        };
-      }
-      return v;
-    },
-  });
 }
 
-function updateBanner() {
+function updateBanner(products: ProductState[]) {
   if (!bannerUi) return;
-  const products = currentProducts;
+
   const completeCount = products.filter(
     (p) => p.status === "COMPLETE" && p.data
   ).length;
-  if (products.length > 0) {
-    if (!bannerUi.mounted) {
-      bannerUi.mount();
-    } else {
-      let root = rootMap.get(bannerUi.wrapper);
-      if (!root) {
-        root = ReactDOM.createRoot(bannerUi.wrapper);
-        rootMap.set(bannerUi.wrapper, root);
-      }
-      root.render(
-        Banner({
-          count: completeCount,
-          onDownloadExcel: () => exportProductsToExcel(products),
-        })
-      );
-    }
-  } else {
-    bannerUi.remove();
+
+  if (completeCount === 0) {
+    bannerUi?.remove();
+    return;
   }
+
+  if (!bannerUi.mounted) {
+    bannerUi.mount();
+  }
+
+  let root = rootMap.get(bannerUi.wrapper);
+  if (!root) {
+    root = ReactDOM.createRoot(bannerUi.wrapper);
+    rootMap.set(bannerUi.wrapper, root);
+  }
+
+  root.render(
+    Banner({
+      count: completeCount,
+      onDownloadExcel: () => exportProductsToExcel(products),
+    })
+  );
 }
 
 function ensureToast() {
@@ -420,7 +390,6 @@ async function fetchAndInjectProductInfo(pid: string) {
 
   const retryResult = (resp.data?.result as CoupangProduct[]) || [];
   const matched = retryResult.find((r) => String(r.productId) === String(pid));
-  console.log("matched::", matched);
 
   const rateText =
     matched &&
@@ -659,6 +628,172 @@ export default defineContentScript({
     })();
 
     let products: ProductState[] = [];
+
+    // 구독자들
+    const subscribers = new Set<(state: ProductState[]) => void>();
+
+    // 상태 읽기
+    function getProducts() {
+      return products;
+    }
+
+    // 구독 등록
+    function subscribe(fn: (state: ProductState[]) => void) {
+      subscribers.add(fn);
+      return () => subscribers.delete(fn);
+    }
+
+    // 액션 디스패치
+    function dispatch(action: { type: string; product: ProductState }) {
+      switch (action.type) {
+        case "UPDATE_PRODUCT":
+          products = products.map((p) =>
+            p.dataId === action.product.dataId ? { ...p, ...action.product } : p
+          );
+          break;
+        case "RESET":
+          products = [];
+          break;
+      }
+      subscribers.forEach((fn) => fn(products));
+    }
+
+    const updateAndRenderProduct = (
+      product: ProductState,
+      updater: (product: ProductState) => ProductState
+    ) => {
+      if (!product) return;
+      const updatedProduct = { ...product, ...updater(product) };
+      dispatch({ type: "UPDATE_PRODUCT", product: updatedProduct });
+    };
+
+    function renderProductBox(pState: ProductState) {
+      const elements = document.querySelectorAll<HTMLElement>(
+        `[data-id="${pState.dataId}"]`
+      );
+
+      const elementList = Array.from(elements);
+
+      const missingMetricBoxes = elementList.filter(
+        (el) => !el.querySelector<HTMLElement>(".ct-metrics")
+      );
+
+      // 박스가 없는경우 추가
+      missingMetricBoxes.forEach((el) => {
+        const newBox = document.createElement("div");
+        newBox.className = "ct-metrics";
+        const aTag = el.querySelector("a");
+        aTag ? aTag.appendChild(newBox) : el.appendChild(newBox);
+      });
+
+      const handleRetry = async (
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+      ) => {
+        const dataId = event.currentTarget.getAttribute("data-dataid");
+        if (!dataId) return;
+
+        // 메시지 보내는걸로 하고 업데이트하자
+
+        const product = products.find((p) => p.dataId === dataId);
+        if (!product) return;
+        try {
+          updateAndRenderProduct(product, (p) => {
+            p.status = "LOADING";
+            p.data = undefined;
+            return p;
+          });
+
+          const retryResponse = await browser.runtime.sendMessage({
+            type: MESSAGE_TYPE.GET_PRODUCT,
+            keyword: product.productId,
+          });
+
+          if (!retryResponse.ok) {
+            updateAndRenderProduct(product, (p) => {
+              p.status = "FAIL";
+              return p;
+            });
+            return;
+          }
+
+          const retryResult =
+            (retryResponse.data?.result as CoupangProduct[]) || [];
+          const matched = retryResult.find(
+            (r) => r.productId == Number(product.productId)
+          );
+
+          if (!matched) {
+            updateAndRenderProduct(product, (p) => {
+              p.status = "EMPTY";
+              return p;
+            });
+            return;
+          }
+          updateAndRenderProduct(product, (p) => {
+            p.status = "COMPLETE";
+            p.productName = matched.productName;
+            p.data = {
+              ...p.data,
+              brandName: matched.productName,
+              pv: matched.pvLast28Day,
+              sales: matched.salesLast28d,
+              rate:
+                matched.pvLast28Day > 0
+                  ? (
+                      (matched.salesLast28d / matched.pvLast28Day) *
+                      100
+                    ).toFixed(2) + "%"
+                  : "-",
+            };
+            return p;
+          });
+        } catch (e) {
+          // 사이드 이팩트
+          updateAndRenderProduct(product, (p) => {
+            p.status = "EMPTY";
+            return p;
+          });
+        }
+      };
+
+      // TODO: 메시지 보내는걸로 변경
+
+      // 렌더링
+      elementList.forEach((el) => {
+        const box = el.querySelector<HTMLElement>(".ct-metrics");
+        if (!box) {
+          return;
+        }
+
+        let root = rootMap.get(box);
+        if (!root) {
+          root = ReactDOM.createRoot(box);
+          rootMap.set(box, root);
+        }
+        switch (pState.status) {
+          case "LOADING":
+            root.render(Loading());
+            break;
+          case "COMPLETE":
+            root.render(Complete({ p: pState }));
+            break;
+          case "FAIL":
+            root.render(Fail({ dataId: pState.dataId, onRetry: handleRetry }));
+            break;
+          case "EMPTY":
+            root.render(Empty());
+          default:
+            root.render(Empty());
+            break;
+        }
+      });
+    }
+
+    subscribe((state) => {
+      state.forEach(renderProductBox);
+      updateBanner(state);
+    });
+
     browser.runtime.onMessage.addListener(async (msg) => {
       if (msg.type === MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL) {
         ensureToast();
@@ -822,9 +957,8 @@ export default defineContentScript({
       if (msg.type === MESSAGE_TYPE.EXCEL_DOWNLOAD_BANNER_INIT) {
         document.querySelectorAll(".ct-metrics").forEach((el) => el.remove());
         products = [];
-        bannerUi.remove();
+        bannerUi?.remove();
         bannerUi = null;
-        return;
       }
 
       if (msg.type === MESSAGE_TYPE.VIEW_PRODUCT_METRICS) {
@@ -839,44 +973,34 @@ export default defineContentScript({
           // TODO: 다른데 뺄 수 있는지 확인해보기
           setupProductsBanner(ctx, products);
 
+          // 스타일 적용
           ensureMetricsStyle();
-          products.forEach((p) => {
-            renderProductBox(p, products);
-          });
 
           // 첫번째 요청 불러오기
-          const q = new URL(location.href).searchParams.get("q");
-          const response = await browser.runtime.sendMessage({
-            type: MESSAGE_TYPE.GET_PRODUCT,
-            keyword: q,
-          });
-          console.log("response", response);
-
-          if (!response.ok) {
-            products.forEach((item) => {
-              const el = document.querySelector<HTMLElement>(
-                `[data-id="${item.dataId}"] .ct-metrics`
-              );
-              if (el) el.remove();
-            });
-            renderErrorToast(ctx).mount();
+          const keyword = new URL(location.href).searchParams.get("q");
+          if (!keyword) {
+            // TODO: 에러 표출
             return;
           }
+          try {
+            const result = await fetchProducts(keyword);
+            products.forEach((product) => {
+              const matched = result.find(
+                (r) => String(r.productId) === String(product.productId)
+              );
 
-          const result = response.data.result as CoupangProduct[];
+              if (!matched) {
+                updateAndRenderProduct(product, (p) => {
+                  p.status = "FAIL";
+                  return p;
+                });
+                return;
+              }
 
-          products.forEach((p) => {
-            if (!p.productId || !p.dataId) return;
-            const matched = result.find(
-              (r) => String(r.productId) === String(p.productId)
-            );
-
-            console.log("matched::", matched);
-            if (matched) {
-              setProductState(p.dataId, (st) => {
-                st.status = "COMPLETE";
-                st.productName = matched.productName;
-                st.data = {
+              updateAndRenderProduct(product, (p) => {
+                p.status = "COMPLETE";
+                p.productName = matched.productName;
+                p.data = {
                   brandName: matched.brandName,
                   pv: matched.pvLast28Day,
                   sales: matched.salesLast28d,
@@ -888,75 +1012,64 @@ export default defineContentScript({
                         ).toFixed(2) + "%"
                       : "-",
                 };
+                return p;
               });
-            } else {
-              setProductState(p.dataId, (st) => {
-                st.status = "FAIL";
-              });
-            }
-          });
+
+              return;
+            });
+          } catch (error) {
+            // TODO: 예외처리 필요
+            // 전체 로딩을 안풀면 계속 로딩상태임
+            console.error("에러", error);
+          }
 
           // 이부분 변경해야함
           const noDataStates = products.filter(
             (item) => item.status === "FAIL" || item.status === undefined
           );
 
-          noDataStates.forEach(async (p) => {
-            if (!p.dataId) {
-              return;
-            }
-
-            setProductState(p.dataId, (st) => {
-              st.status = "LOADING";
-              st.data = undefined;
+          noDataStates.forEach(async (product) => {
+            updateAndRenderProduct(product, (p) => {
+              p.status = "LOADING";
+              p.data = undefined;
+              return p;
             });
 
             try {
-              const retryResp = await browser.runtime.sendMessage({
-                type: MESSAGE_TYPE.GET_PRODUCT,
-                keyword: p.productId,
+              const resposne = await fetchSingleProduct(product.productId);
+
+              updateAndRenderProduct(product, (p) => {
+                p.status = "COMPLETE";
+                p.productName = resposne.productName;
+                p.data = {
+                  brandName: resposne.brandName,
+                  pv: resposne.pvLast28Day,
+                  sales: resposne.salesLast28d,
+                  rate:
+                    resposne.pvLast28Day > 0
+                      ? (
+                          (resposne.salesLast28d / resposne.pvLast28Day) *
+                          100
+                        ).toFixed(2) + "%"
+                      : "-",
+                };
+                return p;
               });
-
-              if (retryResp.ok) {
-                const retryResult =
-                  (retryResp.data?.result as CoupangProduct[]) || [];
-
-                const matched = retryResult.find(
-                  (r) => String(r.productId) === String(p.productId)
-                );
-
-                if (matched) {
-                  setProductState(p.dataId, (st) => {
-                    st.status = "COMPLETE";
-                    st.productName = matched.productName;
-                    st.data = {
-                      brandName: matched.brandName,
-                      pv: matched.pvLast28Day,
-                      sales: matched.salesLast28d,
-                      rate:
-                        matched.pvLast28Day > 0
-                          ? (
-                              (matched.salesLast28d / matched.pvLast28Day) *
-                              100
-                            ).toFixed(2) + "%"
-                          : "-",
-                    };
-                  });
-                } else {
-                  setProductState(p.dataId, (st) => {
-                    st.status = "EMPTY";
-                  });
-                }
-              } else {
-                setProductState(p.dataId, (st) => {
-                  st.status = "FAIL";
+            } catch (err: any) {
+              if (err.code === "FAIL") {
+                // 네트워크/API 오류 → FAIL 상태로 업데이트
+                updateAndRenderProduct(product, (p) => {
+                  p.status = "FAIL";
+                  return p;
                 });
+              } else if (err.code === "EMPTY") {
+                updateAndRenderProduct(product, (p) => {
+                  p.status = "EMPTY";
+                  return p;
+                });
+              } else {
+                // TODO: 예외처리
               }
-            } catch (e) {
-              console.warn("Retry request failed for", p.productId, e);
-              setProductState(p.dataId, (st) => {
-                st.status = "FAIL";
-              });
             }
           });
 
@@ -1001,135 +1114,44 @@ function liElementsToProducts(
 
 // els외부로 뺴기
 
-function renderProductBox(pState: ProductState, products: ProductState[]) {
-  const elements = document.querySelectorAll<HTMLElement>(
-    `[data-id="${pState.dataId}"]`
-  );
-
-  const elementList = Array.from(elements);
-
-  const missingMetricBoxes = elementList.filter(
-    (el) => !el.querySelector<HTMLElement>(".ct-metrics")
-  );
-
-  // 박스가 없는경우 추가
-  missingMetricBoxes.forEach((el) => {
-    const newBox = document.createElement("div");
-    newBox.className = "ct-metrics";
-    const aTag = el.querySelector("a");
-    aTag ? aTag.appendChild(newBox) : el.appendChild(newBox);
+async function fetchProducts(keyword: string) {
+  const response = await browser.runtime.sendMessage({
+    type: MESSAGE_TYPE.GET_PRODUCT,
+    keyword,
   });
 
-  const handleRetry = async (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
-    const dataId = event.currentTarget.getAttribute("data-dataid");
-    if (!dataId) return;
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch products for keyword="${keyword}". ` +
+        `Reason: ${response.error || "Unknown error"}`
+    );
+  }
 
-    const product = products.find((p) => p.dataId === dataId);
-    if (!product) return;
-    try {
-      updateAndRenderProduct(product, (p) => {
-        p.status = "LOADING";
-        p.data = undefined;
-        return p;
-      });
-
-      const retryResponse = await browser.runtime.sendMessage({
-        type: MESSAGE_TYPE.GET_PRODUCT,
-        keyword: product.productId,
-      });
-
-      if (!retryResponse.ok) {
-        updateAndRenderProduct(product, (p) => {
-          p.status = "FAIL";
-          return p;
-        });
-        // TODO :updateBanner필요
-        return;
-      }
-
-      const retryResult =
-        (retryResponse.data?.result as CoupangProduct[]) || [];
-      const matched = retryResult.find(
-        (r) => String(r.productId) === String(product.productId)
-      );
-
-      if (!matched) {
-        updateAndRenderProduct(product, (p) => {
-          p.status = "EMPTY";
-          return p;
-        });
-        return;
-      }
-
-      updateAndRenderProduct(product, (p) => {
-        p.status = "EMPTY";
-        p.productName = matched.productName;
-        p.data = {
-          ...p.data,
-          brandName: matched.productName,
-          pv: matched.pvLast28Day,
-          sales: matched.salesLast28d,
-          rate:
-            matched.pvLast28Day > 0
-              ? ((matched.salesLast28d / matched.pvLast28Day) * 100).toFixed(
-                  2
-                ) + "%"
-              : "-",
-        };
-        return p;
-      });
-    } catch (e) {
-      // 사이드 이팩트
-      updateAndRenderProduct(product, (p) => {
-        p.status = "EMPTY";
-        return p;
-      });
-    }
-  };
-
-  // 렌더링
-
-  elementList.forEach((el) => {
-    const box = el.querySelector<HTMLElement>(".ct-metrics");
-    if (!box) {
-      return;
-    }
-
-    const root = ReactDOM.createRoot(box);
-    switch (pState.status) {
-      case "LOADING":
-        root.render(Loading());
-        break;
-      case "COMPLETE":
-        root.render(Complete({ p: pState }));
-        break;
-      case "FAIL":
-        root.render(Fail({ dataId: pState.dataId, onRetry: handleRetry }));
-        break;
-      case "EMPTY":
-      default:
-        root.render(Empty());
-        break;
-    }
-  });
+  const result = response.data.result as CoupangProduct[];
+  return result;
 }
 
-// 리스너 달아서 적용?
-const updateAndRenderProduct = (
-  product: ProductState,
-  updater: (product: ProductState) => ProductState
-) => {
-  if (!product) return;
-  const updatedProduct = { ...product, ...updater(product) };
-  // renderProductBox(updatedProduct);
-};
+async function fetchSingleProduct(keyword: string) {
+  const response = await browser.runtime.sendMessage({
+    type: MESSAGE_TYPE.GET_PRODUCT,
+    keyword,
+  });
 
-// function setProductState(dataId: string, updater: (st: ProductState) => void) {
-//   const st = products.find((item) => item.dataId === dataId);
-//   if (!st) return;
-//   updater(st);
-//   renderProductBox(st);
-//   updateBanner();
-// }
+  if (!response.ok) {
+    const reason = response.error || "Unknown error";
+    const err = new Error(`FAIL: ${reason}`);
+    (err as any).code = "FAIL";
+    throw err;
+  }
+
+  const result = (response.data?.result as CoupangProduct[]) || [];
+
+  const matched = result.find((r) => String(r.productId) === keyword);
+  if (!matched) {
+    const err = new Error(`EMPTY: No product found for keyword=${keyword}`);
+    (err as any).code = "EMPTY";
+    throw err;
+  }
+
+  return matched;
+}
