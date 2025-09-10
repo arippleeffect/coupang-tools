@@ -410,6 +410,36 @@ async function fetchAndInjectProductInfo(pid: string) {
   });
 }
 
+function injectLoadingProductInfo() {
+  ensureHelloStyle();
+  const root = document.querySelector(
+    ".prod-atf-contents"
+  ) as HTMLElement | null;
+  if (!root) return false;
+  // remove existing banner to avoid duplicates
+  const prev = root.querySelector(".ct-prodinfo");
+  if (prev) prev.remove();
+  const el = document.createElement("div");
+  el.className = "ct-prodinfo compact";
+  el.innerHTML = `
+    <div class="wrap">
+      <div class="line" style="justify-content:center;">
+        <span class="kv"><span class="label">상품 정보 불러오는 중...</span>
+        <span class="value" style="margin-left:6px;">
+          <span class="chip pv" style="display:inline-flex;align-items:center;">
+            <span class="spinner" style="width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:ctspin .8s linear infinite;display:inline-block;margin-right:5px;"></span>
+            로딩중
+          </span>
+        </span>
+        </span>
+      </div>
+    </div>`;
+  const first = root.firstElementChild as HTMLElement | null;
+  if (first) first.insertAdjacentElement("afterend", el);
+  else root.prepend(el);
+  return true;
+}
+
 function setupLazyProductInfo() {
   const exec = async () => {
     const pid = getPidFromLocation();
@@ -417,6 +447,7 @@ function setupLazyProductInfo() {
     try {
       await waitForElement(".prod-atf-contents", 12000);
     } catch {}
+    injectLoadingProductInfo();
     fetchAndInjectProductInfo(pid);
 
     // Keep it persistent: re-inject if DOM re-renders
@@ -425,7 +456,10 @@ function setupLazyProductInfo() {
     const ensure = debounce(() => {
       const banner = root.querySelector(".ct-prodinfo");
       const curPid = getPidFromLocation();
-      if (!banner && curPid) fetchAndInjectProductInfo(curPid);
+      if (!banner && curPid) {
+        injectLoadingProductInfo();
+        fetchAndInjectProductInfo(curPid);
+      }
     }, 150);
     const mo = new MutationObserver(() => ensure());
     mo.observe(root, { childList: true, subtree: true });
@@ -434,7 +468,10 @@ function setupLazyProductInfo() {
     const reMount = () =>
       setTimeout(() => {
         const npid = getPidFromLocation();
-        if (npid) fetchAndInjectProductInfo(npid);
+        if (npid) {
+          injectLoadingProductInfo();
+          fetchAndInjectProductInfo(npid);
+        }
       }, 60);
     window.addEventListener("hashchange", reMount);
     window.addEventListener("popstate", reMount);
@@ -962,11 +999,12 @@ export default defineContentScript({
       }
 
       if (msg.type === MESSAGE_TYPE.VIEW_PRODUCT_METRICS) {
-        const productListElement = document.getElementById("product-list");
-        if (!productListElement) {
-          throw new Error("제품 리스트가 없습니다.");
-        }
         try {
+          const productListElement = document.getElementById("product-list");
+          if (!productListElement) {
+            throw new Error("제품 리스트가 없습니다.");
+          }
+
           const liTagsElement = productListElement.getElementsByTagName("li");
           products = liElementsToProducts(liTagsElement);
 
@@ -1111,8 +1149,6 @@ function liElementsToProducts(
     return acc;
   }, []);
 }
-
-// els외부로 뺴기
 
 async function fetchProducts(keyword: string) {
   const response = await browser.runtime.sendMessage({
