@@ -7,7 +7,14 @@ export default defineConfig({
   manifest: {
     name: "쿠팡 도구 모음",
     version: "1.0",
-    permissions: ["contextMenus", "webRequest", "cookies", "webNavigation"],
+
+    permissions: [
+      "contextMenus",
+      "webRequest",
+      "cookies",
+      "webNavigation",
+      "notifications",
+    ],
     host_permissions: ["https://wing.coupang.com/*"],
   },
 });
