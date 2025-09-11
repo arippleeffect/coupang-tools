@@ -955,6 +955,7 @@ export default defineContentScript({
           const productListElement = getProductListElement();
           const liElements = productListElement?.getElementsByTagName("li");
           products = liElementsToProducts(liElements);
+          products.forEach(renderProductBox);
 
           // 첫번쨰 요청
           const keyword = getSearchKeywordFromUrl();
@@ -1044,6 +1045,7 @@ export default defineContentScript({
           });
         } catch (error: any) {
           console.error(error);
+          document.querySelectorAll(".ct-metrics").forEach((el) => el.remove());
           renderErrorToast(ctx, error.message ?? error.error);
         } finally {
           // bottom-right toast will close when all tasks finished (finishToast)
