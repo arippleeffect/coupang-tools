@@ -18,5 +18,5 @@ export async function renderErrorToast(
   });
 
   ui.mount();
-  setTimeout(() => ui.remove(), 3000);
+  setTimeout(() => ui.remove(), 4000);
 }

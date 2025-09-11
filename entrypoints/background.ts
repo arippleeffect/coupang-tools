@@ -126,8 +126,6 @@ const searchProductByKeyword = async (keyword: string | number) => {
       url: "https://wing.coupang.com",
     });
 
-    console.log("token:: ", token);
-
     if (!token?.value) {
       return {
         ok: false,
@@ -183,10 +181,13 @@ async function fetchPreMatchingSearch<T>({
     } catch (error) {
       throw formatError(error, "PRE_MATCHING_SEARCH_FAILED");
     }
+    console.log("res", res);
+    const message =
+      res.status === 429 ? "요청이 많아 서버가 잠시 응답을 제한했습니다." : "";
     throw formatError(
       {
         code: "PRE_MATCHING_SEARCH_FAILED",
-        message: `상품 검색 요청 실패: ${res.status}\n잠시후 다시 시도해주세요`,
+        message: `[${res.status}] 상품 검색 요청 실패:${message} \n\n 잠시후 다시 시도해주세요`,
         error: bodyText,
       },
       "PRE_MATCHING_SEARCH_FAILED"
