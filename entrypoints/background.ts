@@ -105,7 +105,6 @@ export default defineBackground(() => {
 });
 
 const formatError = (err: any, defaultCode: string) => {
-  console.log("error", err);
   if (typeof err === "string") {
     return {
       ok: false,

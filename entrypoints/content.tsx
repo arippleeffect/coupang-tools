@@ -681,6 +681,7 @@ export default defineContentScript({
 
         const product = products.find((p) => p.dataId === dataId);
         if (!product) return;
+
         try {
           updateAndRenderProduct(product, (p) => {
             p.status = "LOADING";
@@ -737,6 +738,7 @@ export default defineContentScript({
             p.status = "FAIL";
             return p;
           });
+          console.error(error);
           renderErrorToast(ctx, error.message ?? error.error);
         }
       };
@@ -754,6 +756,7 @@ export default defineContentScript({
           root = ReactDOM.createRoot(box);
           rootMap.set(box, root);
         }
+
         switch (pState.status) {
           case "LOADING":
             root.render(Loading());
@@ -955,41 +958,42 @@ export default defineContentScript({
 
           // 첫번쨰 요청
           const keyword = getSearchKeywordFromUrl();
-          const result = await fetchProducts(keyword);
-          products.forEach((product) => {
-            console.log("product", product.dataId, product.type);
-            const matched = result.find(
-              (r) => String(r.productId) === String(product.productId)
-            );
+          if (keyword) {
+            const result = await fetchProducts(keyword);
+            products.forEach((product) => {
+              const matched = result.find(
+                (r) => String(r.productId) === String(product.productId)
+              );
 
-            if (!matched) {
+              if (!matched) {
+                updateAndRenderProduct(product, (p) => {
+                  p.status = "FAIL";
+                  return p;
+                });
+                return;
+              }
+
+              // 완료
               updateAndRenderProduct(product, (p) => {
-                p.status = "FAIL";
+                p.status = "COMPLETE";
+                p.data = {
+                  brandName: matched.brandName,
+                  pv: matched.pvLast28Day,
+                  sales: matched.salesLast28d,
+                  totalSales: matched.salesLast28d * matched.salePrice,
+
+                  rate:
+                    matched.pvLast28Day > 0
+                      ? (
+                          (matched.salesLast28d / matched.pvLast28Day) *
+                          100
+                        ).toFixed(2) + "%"
+                      : "-",
+                };
                 return p;
               });
-              return;
-            }
-
-            // 완료
-            updateAndRenderProduct(product, (p) => {
-              p.status = "COMPLETE";
-              p.data = {
-                brandName: matched.brandName,
-                pv: matched.pvLast28Day,
-                sales: matched.salesLast28d,
-                totalSales: matched.salesLast28d * matched.salePrice,
-
-                rate:
-                  matched.pvLast28Day > 0
-                    ? (
-                        (matched.salesLast28d / matched.pvLast28Day) *
-                        100
-                      ).toFixed(2) + "%"
-                    : "-",
-              };
-              return p;
             });
-          });
+          }
 
           const noDataStates = products.filter(
             (item) => item.status === "FAIL" || item.status === undefined
@@ -1058,8 +1062,12 @@ function liElementsToProducts(
     el.classList.contains("ProductUnit_productUnit__Qd6sv")
   );
 
-  return Array.from(productItems).map((el) => {
-    const dataId = el.dataset.id;
+  return Array.from(productItems).map((el, index) => {
+    let dataId = el.dataset.id;
+    if (!dataId || dataId === "0") {
+      dataId = `auto-${Date.now()}-${index}`;
+      el.dataset.id = dataId; // 엘리먼트에도 반영
+    }
     const aTag = el.children[0]?.getAttribute?.("href");
     const match = aTag && aTag.match(/products\/(\d+)/);
     const productId = match ? match[1] : undefined;
@@ -1097,11 +1105,13 @@ function getProductListElement() {
 }
 
 function getSearchKeywordFromUrl() {
-  const keyword = new URL(location.href).searchParams.get("q");
-  if (!keyword) {
-    throw { code: "NO_KEYWOD", messag: "키워드가 없습니다." };
+  const isCategory = location.href.startsWith(
+    "https://www.coupang.com/np/categories/"
+  );
+  if (isCategory) {
+    return document.querySelectorAll("h1")[0].textContent;
   }
-
+  const keyword = new URL(location.href).searchParams.get("q");
   return keyword;
 }
 
