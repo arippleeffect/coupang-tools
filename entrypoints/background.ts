@@ -20,24 +20,6 @@ export default defineBackground(() => {
     contexts: ["page"],
   });
 
-  browser.contextMenus.create({
-    id: MESSAGE_TYPE.VIEW_PRODUCT_METRICS,
-    title: "쿠팡 상품 지표보기",
-    contexts: ["page"],
-  });
-
-  browser.contextMenus.create({
-    id: MESSAGE_TYPE.VIEW_PRODUCT_METRICS,
-    title: "쿠팡 상품 지표보기",
-    contexts: ["page"],
-  });
-
-  browser.contextMenus.create({
-    id: MESSAGE_TYPE.PCID_INIT,
-    title: "PCID 초기화",
-    contexts: ["page"],
-  });
-
   browser.contextMenus.onClicked.addListener(async (info, tab) => {
     if (!tab?.id) return;
 
