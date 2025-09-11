@@ -19,7 +19,6 @@ import {
 } from "@/types";
 
 let bannerUi: any = null;
-let currentProducts: ProductState[] = [];
 
 function exportProductsToExcel(products: ProductState[]) {
   const normalRows = products
@@ -33,7 +32,6 @@ function exportProductsToExcel(products: ProductState[]) {
       pv: p.data?.pv ?? "",
       sales: p.data?.sales ?? "",
       totalSales: p.data?.totalSales,
-
       rate: p.data?.rate ?? "",
     }));
 
@@ -101,10 +99,9 @@ function updateBanner(ctx: any, products: ProductState[]) {
         }
         root.render(
           Banner({
-            count: currentProducts.filter(
-              (p) => p.status === "COMPLETE" && p.data
-            ).length,
-            onDownloadExcel: () => exportProductsToExcel(currentProducts),
+            count: products.filter((p) => p.status === "COMPLETE" && p.data)
+              .length,
+            onDownloadExcel: () => exportProductsToExcel(products),
           })
         );
       },
@@ -960,6 +957,7 @@ export default defineContentScript({
           const keyword = getSearchKeywordFromUrl();
           const result = await fetchProducts(keyword);
           products.forEach((product) => {
+            console.log("product", product.dataId, product.type);
             const matched = result.find(
               (r) => String(r.productId) === String(product.productId)
             );
@@ -1056,12 +1054,16 @@ function liElementsToProducts(
 ): ProductState[] {
   const SELECTOR_PRODUCT_NAME = ".ProductUnit_productName__gre7e";
   const SELECTOR_AD_MARK = ".AdMark_adMark__KPMsC";
+  const productItems = Array.from(list).filter((el) =>
+    el.classList.contains("ProductUnit_productUnit__Qd6sv")
+  );
 
-  return Array.from(list).reduce<ProductState[]>((acc, el) => {
+  return Array.from(productItems).map((el) => {
     const dataId = el.dataset.id;
     const aTag = el.children[0]?.getAttribute?.("href");
     const match = aTag && aTag.match(/products\/(\d+)/);
     const productId = match ? match[1] : undefined;
+
     const type: ProductType = el.querySelector(SELECTOR_AD_MARK)
       ? "AD"
       : "NORMAL";
@@ -1070,18 +1072,15 @@ function liElementsToProducts(
         .querySelector<HTMLElement>(SELECTOR_PRODUCT_NAME)
         ?.textContent?.trim() ?? "";
 
-    if (typeof dataId === "string" && typeof productId === "string") {
-      acc.push({
-        dataId,
-        productId,
-        productName,
-        status: "LOADING",
-        type,
-        data: undefined,
-      });
-    }
-    return acc;
-  }, []);
+    return {
+      dataId,
+      productId,
+      productName,
+      status: "LOADING",
+      type,
+      data: undefined,
+    };
+  }) as ProductState[];
 }
 
 function getProductListElement() {
