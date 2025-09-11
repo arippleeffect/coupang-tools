@@ -3,7 +3,13 @@ import * as R from "remeda";
 import { renderErrorToast } from "@/modlues/ui/toastRenderer";
 import * as ReactDOM from "react-dom/client";
 const rootMap = new WeakMap<HTMLElement, ReactDOM.Root>();
-import { Complete, Empty, Fail, Loading } from "@/modlues/ui/metrics";
+import {
+  Complete,
+  Empty,
+  Fail,
+  Loading,
+  formatCurrencyKRW,
+} from "@/modlues/ui/metrics";
 import Banner from "@/modlues/ui/banner";
 import {
   CoupangProduct,
@@ -281,6 +287,7 @@ function injectProductInfoAfterHeader(info: {
   pvLast28Day?: number;
   salesLast28d?: number;
   rateText?: string;
+  totalSales?: string;
 }) {
   ensureHelloStyle();
   const root = document.querySelector(
@@ -304,6 +311,7 @@ function injectProductInfoAfterHeader(info: {
   const pv = info.pvLast28Day ?? "-";
   const sales = info.salesLast28d ?? "-";
   const rate = info.rateText ?? "-";
+  const totalSales = info.totalSales ?? "-";
 
   el.innerHTML = `
     <div class="wrap">
@@ -320,6 +328,7 @@ function injectProductInfoAfterHeader(info: {
         <span class="kv"><span class="label">판매</span><span class="value chip sales">${fmtInt(
           sales
         )}</span></span>
+        <span class="kv"><span class="label">매출</span><span class="value chip sales">${totalSales}</span></span>
         <span class="kv"><span class="label">전환</span><span class="value chip rate">${rate}</span></span>
       </div>
       <div class="sub">최근 28일 기준</div>
@@ -393,12 +402,20 @@ async function fetchAndInjectProductInfo(pid: string) {
         ).toFixed(2) + "%"
       : "-";
 
+  const totalSalesValue =
+    matched &&
+    typeof matched.salesLast28d === "number" &&
+    typeof matched.salePrice === "number"
+      ? formatCurrencyKRW(matched.salesLast28d * matched.salePrice)
+      : "-";
+
   injectProductInfoAfterHeader({
     productId: String(pid),
     brandName: matched?.brandName,
     pvLast28Day: matched?.pvLast28Day,
     salesLast28d: matched?.salesLast28d,
     rateText,
+    totalSales: totalSalesValue,
   });
 }
 
@@ -1024,6 +1041,7 @@ export default defineContentScript({
             }
           });
         } catch (error: any) {
+          console.error(error);
           renderErrorToast(ctx, error.message ?? error.error);
         } finally {
           // bottom-right toast will close when all tasks finished (finishToast)

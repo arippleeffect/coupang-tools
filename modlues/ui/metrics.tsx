@@ -1,7 +1,7 @@
 import { ProductState } from "@/types";
 import "./metrics.css"; // 스타일 직접 불러오기
 
-function formatCurrencyKRW(value?: number): string {
+export function formatCurrencyKRW(value?: number): string {
   if (value == null || isNaN(value)) return "-";
   if (value >= 100000000)
     return (
