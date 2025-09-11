@@ -378,42 +378,44 @@ async function fetchAndInjectProductInfo(pid: string) {
       type: MESSAGE_TYPE.GET_PRODUCT,
       keyword: pid,
     });
-  } catch {
-    resp = null;
+    if (!resp.ok) {
+      injectFailProductInfo(pid);
+      return;
+    }
+
+    const retryResult = (resp.data?.result as CoupangProduct[]) || [];
+    const matched = retryResult.find(
+      (r) => String(r.productId) === String(pid)
+    );
+
+    const rateText =
+      matched &&
+      Number(matched.pvLast28Day) > 0 &&
+      isFinite(Number(matched.salesLast28d))
+        ? (
+            (Number(matched.salesLast28d) / Number(matched.pvLast28Day)) *
+            100
+          ).toFixed(2) + "%"
+        : "-";
+
+    const totalSalesValue =
+      matched &&
+      typeof matched.salesLast28d === "number" &&
+      typeof matched.salePrice === "number"
+        ? formatCurrencyKRW(matched.salesLast28d * matched.salePrice)
+        : "-";
+
+    injectProductInfoAfterHeader({
+      productId: String(pid),
+      brandName: matched?.brandName,
+      pvLast28Day: matched?.pvLast28Day,
+      salesLast28d: matched?.salesLast28d,
+      rateText,
+      totalSales: totalSalesValue,
+    });
+  } catch (e) {
+    injectFailProductInfo(pid);
   }
-
-  if (!resp.ok) {
-    return;
-  }
-
-  const retryResult = (resp.data?.result as CoupangProduct[]) || [];
-  const matched = retryResult.find((r) => String(r.productId) === String(pid));
-
-  const rateText =
-    matched &&
-    Number(matched.pvLast28Day) > 0 &&
-    isFinite(Number(matched.salesLast28d))
-      ? (
-          (Number(matched.salesLast28d) / Number(matched.pvLast28Day)) *
-          100
-        ).toFixed(2) + "%"
-      : "-";
-
-  const totalSalesValue =
-    matched &&
-    typeof matched.salesLast28d === "number" &&
-    typeof matched.salePrice === "number"
-      ? formatCurrencyKRW(matched.salesLast28d * matched.salePrice)
-      : "-";
-
-  injectProductInfoAfterHeader({
-    productId: String(pid),
-    brandName: matched?.brandName,
-    pvLast28Day: matched?.pvLast28Day,
-    salesLast28d: matched?.salesLast28d,
-    rateText,
-    totalSales: totalSalesValue,
-  });
 }
 
 function injectLoadingProductInfo() {
@@ -1158,4 +1160,38 @@ async function fetchSingleProduct(keyword: string) {
   }
 
   return matched;
+}
+
+function injectFailProductInfo(pid: string) {
+  ensureHelloStyle();
+  const root = document.querySelector(
+    ".prod-atf-contents"
+  ) as HTMLElement | null;
+  if (!root) return false;
+  // remove existing banner to avoid duplicates
+  const prev = root.querySelector(".ct-prodinfo");
+  if (prev) prev.remove();
+  const el = document.createElement("div");
+  el.className = "ct-prodinfo compact";
+  el.innerHTML = `
+    <div class="wrap">
+      <div class="line" style="justify-content:center;">
+        <span class="kv"><span class="label">상품 정보를 불러오지 못했습니다.</span>
+          <button class="retry-btn" style="margin-left:12px;">다시 시도</button>
+        </span>
+      </div>
+    </div>
+  `;
+  const first = root.firstElementChild as HTMLElement | null;
+  if (first) first.insertAdjacentElement("afterend", el);
+  else root.prepend(el);
+  // Add retry button event
+  const btn = el.querySelector(".retry-btn") as HTMLButtonElement | null;
+  if (btn) {
+    btn.onclick = () => {
+      injectLoadingProductInfo();
+      fetchAndInjectProductInfo(pid);
+    };
+  }
+  return true;
 }
