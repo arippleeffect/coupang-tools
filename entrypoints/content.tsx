@@ -5,7 +5,12 @@ import * as ReactDOM from "react-dom/client";
 const rootMap = new WeakMap<HTMLElement, ReactDOM.Root>();
 import { Complete, Empty, Fail, Loading } from "@/modlues/ui/metrics";
 import Banner from "@/modlues/ui/banner";
-import { MESSAGE_TYPE } from "@/types";
+import {
+  CoupangProduct,
+  MESSAGE_TYPE,
+  ProductState,
+  ProductType,
+} from "@/types";
 
 let bannerUi: any = null;
 let currentProducts: ProductState[] = [];
@@ -21,6 +26,8 @@ function exportProductsToExcel(products: ProductState[]) {
       brandName: p.data?.brandName ?? "",
       pv: p.data?.pv ?? "",
       sales: p.data?.sales ?? "",
+      totalSales: p.data?.totalSales,
+
       rate: p.data?.rate ?? "",
     }));
 
@@ -74,18 +81,7 @@ function exportProductsToExcel(products: ProductState[]) {
   URL.revokeObjectURL(url);
 }
 
-function setupProductsBanner(ctx: any, products: ProductState[]) {
-  // ✅ products 없으면 배너 제거 후 리턴
-  if (products.length === 0) {
-    if (bannerUi) {
-      bannerUi.remove();
-      bannerUi = null;
-    }
-    return products;
-  }
-
-  currentProducts = products;
-
+function updateBanner(ctx: any, products: ProductState[]) {
   if (!bannerUi) {
     bannerUi = createIntegratedUi(ctx, {
       anchor: "body",
@@ -108,10 +104,6 @@ function setupProductsBanner(ctx: any, products: ProductState[]) {
       },
     });
   }
-}
-
-function updateBanner(products: ProductState[]) {
-  if (!bannerUi) return;
 
   const completeCount = products.filter(
     (p) => p.status === "COMPLETE" && p.data
@@ -194,7 +186,7 @@ function finishToast(ok: boolean, finalCount: number) {
   setTimeout(() => t.remove(), 2500);
 }
 
-function ensureMetricsStyle() {
+function initMetricsStyle() {
   const styleId = "ct-metrics-style";
   if (document.getElementById(styleId)) return;
   const style = document.createElement("style");
@@ -610,50 +602,6 @@ const fcCodesToMerge = new Set([
 
 const isRepresentativeFcCode = (t: string) =>
   t.startsWith("XRC") || t.startsWith("CHA9");
-type ProductStatus = "LOADING" | "COMPLETE" | "FAIL" | "EMPTY";
-type ProductType = "NORMAL" | "AD";
-type ProductData = {
-  brandName: string;
-  pv: number;
-  sales: number;
-  rate: string;
-};
-export type ProductState = {
-  dataId: string;
-  productName: string;
-  productId: string;
-  status: ProductStatus;
-  type: ProductType;
-  data?: ProductData;
-};
-
-type CoupangProduct = {
-  productId: number;
-  productName: string;
-  brandName: string;
-  itemId: number;
-  itemName: string;
-  displayCategoryInfo: {
-    leafCategoryCode: number;
-    rootCategoryCode: number;
-    categoryHierarchy: string;
-  }[];
-  manufacture: string;
-  categoryId: number;
-  itemCountOfProduct: number;
-  imagePath: string;
-  matchType: string | null;
-  salePrice: number;
-  vendorItemId: number;
-  ratingCount: number;
-  rating: number;
-  sponsored: string | null;
-  matchingResultId: string | null;
-  pvLast28Day: number;
-  salesLast28d: number;
-  deliveryMethod: string;
-  attributeTypes: string | null;
-};
 
 export default defineContentScript({
   matches: ["https://wing.coupang.com/*", "https://www.coupang.com/*"],
@@ -665,22 +613,11 @@ export default defineContentScript({
     })();
 
     let products: ProductState[] = [];
-
-    // 구독자들
     const subscribers = new Set<(state: ProductState[]) => void>();
-
-    // 상태 읽기
-    function getProducts() {
-      return products;
-    }
-
-    // 구독 등록
     function subscribe(fn: (state: ProductState[]) => void) {
       subscribers.add(fn);
       return () => subscribers.delete(fn);
     }
-
-    // 액션 디스패치
     function dispatch(action: { type: string; product: ProductState }) {
       switch (action.type) {
         case "UPDATE_PRODUCT":
@@ -715,7 +652,6 @@ export default defineContentScript({
         (el) => !el.querySelector<HTMLElement>(".ct-metrics")
       );
 
-      // 박스가 없는경우 추가
       missingMetricBoxes.forEach((el) => {
         const newBox = document.createElement("div");
         newBox.className = "ct-metrics";
@@ -728,8 +664,6 @@ export default defineContentScript({
       ) => {
         const dataId = event.currentTarget.getAttribute("data-dataid");
         if (!dataId) return;
-
-        // 메시지 보내는걸로 하고 업데이트하자
 
         const product = products.find((p) => p.dataId === dataId);
         if (!product) return;
@@ -750,7 +684,7 @@ export default defineContentScript({
               p.status = "FAIL";
               return p;
             });
-            return;
+            throw retryResponse;
           }
 
           const retryResult =
@@ -768,12 +702,12 @@ export default defineContentScript({
           }
           updateAndRenderProduct(product, (p) => {
             p.status = "COMPLETE";
-            p.productName = matched.productName;
             p.data = {
               ...p.data,
-              brandName: matched.productName,
+              brandName: matched.brandName,
               pv: matched.pvLast28Day,
               sales: matched.salesLast28d,
+              totalSales: matched.salesLast28d * matched.salePrice,
               rate:
                 matched.pvLast28Day > 0
                   ? (
@@ -784,18 +718,17 @@ export default defineContentScript({
             };
             return p;
           });
-        } catch (e) {
-          // 사이드 이팩트
+        } catch (error: any) {
           updateAndRenderProduct(product, (p) => {
-            p.status = "EMPTY";
+            p.status = "FAIL";
             return p;
           });
+          renderErrorToast(ctx, error.message ?? error.error);
         }
       };
 
       // TODO: 메시지 보내는걸로 변경
 
-      // 렌더링
       elementList.forEach((el) => {
         const box = el.querySelector<HTMLElement>(".ct-metrics");
         if (!box) {
@@ -828,7 +761,7 @@ export default defineContentScript({
 
     subscribe((state) => {
       state.forEach(renderProductBox);
-      updateBanner(state);
+      updateBanner(ctx, state);
     });
 
     browser.runtime.onMessage.addListener(async (msg) => {
@@ -992,76 +925,57 @@ export default defineContentScript({
       }
 
       if (msg.type === MESSAGE_TYPE.EXCEL_DOWNLOAD_BANNER_INIT) {
-        document.querySelectorAll(".ct-metrics").forEach((el) => el.remove());
         products = [];
+        document.querySelectorAll(".ct-metrics").forEach((el) => el.remove());
         bannerUi?.remove();
         bannerUi = null;
       }
 
       if (msg.type === MESSAGE_TYPE.VIEW_PRODUCT_METRICS) {
         try {
-          const productListElement = document.getElementById("product-list");
-          if (!productListElement) {
-            throw new Error("제품 리스트가 없습니다.");
-          }
+          initMetricsStyle();
 
-          const liTagsElement = productListElement.getElementsByTagName("li");
-          products = liElementsToProducts(liTagsElement);
+          const productListElement = getProductListElement();
+          const liElements = productListElement?.getElementsByTagName("li");
+          products = liElementsToProducts(liElements);
 
-          // TODO: 다른데 뺄 수 있는지 확인해보기
-          setupProductsBanner(ctx, products);
+          // 첫번쨰 요청
+          const keyword = getSearchKeywordFromUrl();
+          const result = await fetchProducts(keyword);
+          products.forEach((product) => {
+            const matched = result.find(
+              (r) => String(r.productId) === String(product.productId)
+            );
 
-          // 스타일 적용
-          ensureMetricsStyle();
-
-          // 첫번째 요청 불러오기
-          const keyword = new URL(location.href).searchParams.get("q");
-          if (!keyword) {
-            // TODO: 에러 표출
-            return;
-          }
-          try {
-            const result = await fetchProducts(keyword);
-            products.forEach((product) => {
-              const matched = result.find(
-                (r) => String(r.productId) === String(product.productId)
-              );
-
-              if (!matched) {
-                updateAndRenderProduct(product, (p) => {
-                  p.status = "FAIL";
-                  return p;
-                });
-                return;
-              }
-
+            if (!matched) {
               updateAndRenderProduct(product, (p) => {
-                p.status = "COMPLETE";
-                p.productName = matched.productName;
-                p.data = {
-                  brandName: matched.brandName,
-                  pv: matched.pvLast28Day,
-                  sales: matched.salesLast28d,
-                  rate:
-                    matched.pvLast28Day > 0
-                      ? (
-                          (matched.salesLast28d / matched.pvLast28Day) *
-                          100
-                        ).toFixed(2) + "%"
-                      : "-",
-                };
+                p.status = "FAIL";
                 return p;
               });
-
               return;
-            });
-          } catch (error) {
-            // TODO: 예외처리 필요
-            // 전체 로딩을 안풀면 계속 로딩상태임
-            console.error("에러", error);
-          }
+            }
 
-          // 이부분 변경해야함
+            // 완료
+            updateAndRenderProduct(product, (p) => {
+              p.status = "COMPLETE";
+              p.data = {
+                brandName: matched.brandName,
+                pv: matched.pvLast28Day,
+                sales: matched.salesLast28d,
+                totalSales: matched.salesLast28d * matched.salePrice,
+
+                rate:
+                  matched.pvLast28Day > 0
+                    ? (
+                        (matched.salesLast28d / matched.pvLast28Day) *
+                        100
+                      ).toFixed(2) + "%"
+                    : "-",
+              };
+              return p;
+            });
+          });
+
           const noDataStates = products.filter(
             (item) => item.status === "FAIL" || item.status === undefined
           );
@@ -1078,11 +992,11 @@ export default defineContentScript({
 
               updateAndRenderProduct(product, (p) => {
                 p.status = "COMPLETE";
-                p.productName = resposne.productName;
                 p.data = {
                   brandName: resposne.brandName,
                   pv: resposne.pvLast28Day,
                   sales: resposne.salesLast28d,
+                  totalSales: resposne.salesLast28d * resposne.salePrice,
                   rate:
                     resposne.pvLast28Day > 0
                       ? (
@@ -1095,7 +1009,6 @@ export default defineContentScript({
               });
             } catch (err: any) {
               if (err.code === "FAIL") {
-                // 네트워크/API 오류 → FAIL 상태로 업데이트
                 updateAndRenderProduct(product, (p) => {
                   p.status = "FAIL";
                   return p;
@@ -1106,12 +1019,12 @@ export default defineContentScript({
                   return p;
                 });
               } else {
-                // TODO: 예외처리
+                throw err;
               }
             }
           });
-
-          return;
+        } catch (error: any) {
+          renderErrorToast(ctx, error.message ?? error.error);
         } finally {
           // bottom-right toast will close when all tasks finished (finishToast)
         }
@@ -1123,17 +1036,20 @@ export default defineContentScript({
 function liElementsToProducts(
   list: HTMLCollectionOf<HTMLLIElement>
 ): ProductState[] {
+  const SELECTOR_PRODUCT_NAME = ".ProductUnit_productName__gre7e";
+  const SELECTOR_AD_MARK = ".AdMark_adMark__KPMsC";
+
   return Array.from(list).reduce<ProductState[]>((acc, el) => {
     const dataId = el.dataset.id;
     const aTag = el.children[0]?.getAttribute?.("href");
     const match = aTag && aTag.match(/products\/(\d+)/);
     const productId = match ? match[1] : undefined;
-    const type: ProductType = el.querySelector(".AdMark_adMark__KPMsC")
+    const type: ProductType = el.querySelector(SELECTOR_AD_MARK)
       ? "AD"
       : "NORMAL";
     const productName =
       el
-        .querySelector<HTMLElement>(".ProductUnit_productName__gre7e")
+        .querySelector<HTMLElement>(SELECTOR_PRODUCT_NAME)
         ?.textContent?.trim() ?? "";
 
     if (typeof dataId === "string" && typeof productId === "string") {
@@ -1150,6 +1066,28 @@ function liElementsToProducts(
   }, []);
 }
 
+function getProductListElement() {
+  const productListElement = document.getElementById("product-list");
+
+  if (!productListElement) {
+    throw {
+      code: "NO_PRODUCT_LIST",
+      message: "쿠팡 제품 리스트를 찾을 수 없습니다.",
+    };
+  }
+
+  return productListElement;
+}
+
+function getSearchKeywordFromUrl() {
+  const keyword = new URL(location.href).searchParams.get("q");
+  if (!keyword) {
+    throw { code: "NO_KEYWOD", messag: "키워드가 없습니다." };
+  }
+
+  return keyword;
+}
+
 async function fetchProducts(keyword: string) {
   const response = await browser.runtime.sendMessage({
     type: MESSAGE_TYPE.GET_PRODUCT,
@@ -1157,10 +1095,7 @@ async function fetchProducts(keyword: string) {
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to fetch products for keyword="${keyword}". ` +
-        `Reason: ${response.error || "Unknown error"}`
-    );
+    throw response;
   }
 
   const result = response.data.result as CoupangProduct[];
@@ -1186,7 +1121,11 @@ async function fetchSingleProduct(keyword: string) {
   if (!matched) {
     const err = new Error(`EMPTY: No product found for keyword=${keyword}`);
     (err as any).code = "EMPTY";
-    throw err;
+    throw {
+      code: "EMPTY",
+      error: `EMPTY: No product found for keyword=${keyword}`,
+      message: "URL에 키워드(q)가 없습니다.",
+    };
   }
 
   return matched;

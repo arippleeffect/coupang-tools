@@ -1,4 +1,8 @@
-export function ErrorToast() {
+type Props = {
+  message?: string;
+};
+
+export function ErrorToast({ message }: Props) {
   return (
     <div
       id="ct-toast"
@@ -18,7 +22,7 @@ export function ErrorToast() {
       }}
     >
       <div className="ct-title">요청 실패</div>
-      <div className="ct-sub">잠시 후 다시 시도해주세요</div>
+      {message && <div className="ct-sub">{message}</div>}
     </div>
   );
 }

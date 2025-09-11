@@ -3,6 +3,7 @@ export enum MESSAGE_TYPE {
   VIEW_PRODUCT_METRICS = "VIEW_PRODUCT_METRICS",
   GET_PRODUCT = "GET_PRODUCT",
   EXCEL_DOWNLOAD_BANNER_INIT = "EXCEL_DOWNLOAD_BANNER_INIT",
+  PCID_INIT = "PCID_INIT",
 }
 
 export type GetProductMetricsMsg = {
@@ -58,4 +59,50 @@ export type MessageResponse<T> = {
   data?: T;
   error?: string;
   message?: string;
+};
+
+type ProductStatus = "LOADING" | "COMPLETE" | "FAIL" | "EMPTY";
+export type ProductType = "NORMAL" | "AD";
+type ProductData = {
+  brandName: string;
+  pv: number;
+  sales: number;
+  totalSales: number;
+  rate: string;
+};
+export type ProductState = {
+  dataId: string;
+  productName: string;
+  productId: string;
+  status: ProductStatus;
+  type: ProductType;
+  data?: ProductData;
+};
+
+export type CoupangProduct = {
+  productId: number;
+  productName: string;
+  brandName: string;
+  itemId: number;
+  itemName: string;
+  displayCategoryInfo: {
+    leafCategoryCode: number;
+    rootCategoryCode: number;
+    categoryHierarchy: string;
+  }[];
+  manufacture: string;
+  categoryId: number;
+  itemCountOfProduct: number;
+  imagePath: string;
+  matchType: string | null;
+  salePrice: number;
+  vendorItemId: number;
+  ratingCount: number;
+  rating: number;
+  sponsored: string | null;
+  matchingResultId: string | null;
+  pvLast28Day: number;
+  salesLast28d: number;
+  deliveryMethod: string;
+  attributeTypes: string | null;
 };

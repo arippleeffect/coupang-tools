@@ -26,6 +26,18 @@ export default defineBackground(() => {
     contexts: ["page"],
   });
 
+  browser.contextMenus.create({
+    id: MESSAGE_TYPE.VIEW_PRODUCT_METRICS,
+    title: "쿠팡 상품 지표보기",
+    contexts: ["page"],
+  });
+
+  browser.contextMenus.create({
+    id: MESSAGE_TYPE.PCID_INIT,
+    title: "PCID 초기화",
+    contexts: ["page"],
+  });
+
   browser.contextMenus.onClicked.addListener(async (info, tab) => {
     if (!tab?.id) return;
 
@@ -60,6 +72,9 @@ export default defineBackground(() => {
         console.error("[bg] failed to send message", err);
       }
     }
+
+    if (info.menuItemId === MESSAGE_TYPE.PCID_INIT) {
+    }
   });
 
   browser.runtime.onMessage.addListener(
@@ -89,9 +104,40 @@ export default defineBackground(() => {
   });
 });
 
+const formatError = (err: any, defaultCode: string) => {
+  console.log("error", err);
+  if (typeof err === "string") {
+    return {
+      ok: false,
+      code: defaultCode,
+      message: err,
+      error: err,
+    };
+  } else if (err && typeof err === "object") {
+    return {
+      ok: false,
+      code: err.code || defaultCode,
+      message: err.message || String(err),
+      error: err.error || err.message || String(err),
+    };
+  } else {
+    return {
+      ok: false,
+      code: defaultCode,
+      message: String(err),
+      error: String(err),
+    };
+  }
+};
+
 const searchProductByKeyword = async (keyword: string | number) => {
   if (keyword == null || keyword === "") {
-    return { ok: false, error: "NO_PRODUCT_ID" };
+    return {
+      ok: false,
+      code: "NO_PRODUCT_ID",
+      message: "키워드가 없습니다.",
+      error: "키워드가 없습니다.",
+    };
   }
   try {
     const token = await browser.cookies.get({
@@ -99,8 +145,15 @@ const searchProductByKeyword = async (keyword: string | number) => {
       url: "https://wing.coupang.com",
     });
 
+    console.log("token:: ", token);
+
     if (!token?.value) {
-      return { ok: false, error: "NO_XSRF_TOKEN" };
+      return {
+        ok: false,
+        code: "NO_XSRF_TOKEN",
+        message: "새탭에 쿠팡윙로그인을 해주세요",
+        error: "새탭에 쿠팡윙로그인을 해주세요",
+      };
     }
 
     const data = await fetchPreMatchingSearch<PreMatchingSearchResponse>({
@@ -110,7 +163,7 @@ const searchProductByKeyword = async (keyword: string | number) => {
 
     return { ok: true, data };
   } catch (err) {
-    return { ok: false, error: String(err) };
+    return formatError(err, "SEARCH_PRODUCT_FAILED");
   }
 };
 
@@ -147,9 +200,16 @@ async function fetchPreMatchingSearch<T>({
     try {
       bodyText = await res.text();
     } catch (error) {
-      throw new Error(`PreMatchingSearch failed: ${res.status} ${error}`);
+      throw formatError(error, "PRE_MATCHING_SEARCH_FAILED");
     }
-    throw new Error(`PreMatchingSearch failed: ${res.status} ${bodyText}`);
+    throw formatError(
+      {
+        code: "PRE_MATCHING_SEARCH_FAILED",
+        message: `상품 검색 요청 실패: ${res.status}\n잠시후 다시 시도해주세요`,
+        error: bodyText,
+      },
+      "PRE_MATCHING_SEARCH_FAILED"
+    );
   }
 
   const json = await res.json();

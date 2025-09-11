@@ -1,5 +1,22 @@
-import { ProductState } from "@/entrypoints/content";
+import { ProductState } from "@/types";
 import "./metrics.css"; // 스타일 직접 불러오기
+
+function formatCurrencyKRW(value?: number): string {
+  if (value == null || isNaN(value)) return "-";
+  if (value >= 100000000)
+    return (
+      (value / 100000000)
+        .toLocaleString("ko-KR", { maximumFractionDigits: 1 })
+        .replace(/\.0$/, "") + "억"
+    );
+  if (value >= 10000)
+    return (
+      (value / 10000)
+        .toLocaleString("ko-KR", { maximumFractionDigits: 1 })
+        .replace(/\.0$/, "") + "만"
+    );
+  return value.toLocaleString("ko-KR") + "원";
+}
 
 export function Loading() {
   return (
@@ -30,6 +47,12 @@ export function Complete({ p }: { p: ProductState }) {
         <span className="label">판매량</span>
         <span className="value chip sales">
           {p.data?.sales.toLocaleString()}
+        </span>
+      </div>
+      <div className="metric">
+        <span className="label">매출</span>
+        <span className="value chip sales">
+          {formatCurrencyKRW(p.data?.totalSales)}
         </span>
       </div>
       <div className="metric">
