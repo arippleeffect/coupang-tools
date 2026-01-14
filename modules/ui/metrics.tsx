@@ -21,8 +21,9 @@ export function formatCurrencyKRW(value?: number): string {
 export function Loading() {
   return (
     <div className="wrap">
-      <div className="metric loading">
+      <div className="metric">
         <span className="spinner"></span>
+        <span className="label">로딩중</span>
       </div>
     </div>
   );
@@ -50,14 +51,14 @@ export function Complete({ p }: { p: ProductState }) {
         </span>
       </div>
       <div className="metric">
+        <span className="label">전환률</span>
+        <span className="value chip rate">{p.data?.rate}</span>
+      </div>
+      <div className="metric">
         <span className="label">매출</span>
         <span className="value chip sales">
           {formatCurrencyKRW(p.data?.totalSales)}
         </span>
-      </div>
-      <div className="metric">
-        <span className="label">전환률</span>
-        <span className="value chip rate">{p.data?.rate}</span>
       </div>
     </div>
   );

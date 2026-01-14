@@ -1,0 +1,41 @@
+/* Toast Styles */
+#ct-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  background: #111;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica,
+    Arial, sans-serif;
+  opacity: 0.95;
+  width: 200px;
+  height: 80px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#ct-toast .ct-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+#ct-toast .ct-sub {
+  opacity: 0.85;
+}
+
+#ct-toast .ct-bar {
+  height: 3px;
+  background: #2ecc71;
+  margin-top: 8px;
+  border-radius: 2px;
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+#ct-toast.ct-error {
+  background: #8b1d1d;
+}

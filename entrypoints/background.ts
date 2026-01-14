@@ -12,15 +12,21 @@ export default defineBackground(() => {
     id: MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL,
     title: "로켓그로스 반출 액셀 다운로드",
     contexts: ["page"],
+    documentUrlPatterns: ["https://wing.coupang.com/*"],
   });
 
   browser.contextMenus.create({
     id: MESSAGE_TYPE.VIEW_PRODUCT_METRICS,
     title: "쿠팡 상품 지표보기",
     contexts: ["page"],
+    documentUrlPatterns: [
+      "https://www.coupang.com/*",
+      "https://shop.coupang.com/*",
+    ],
   });
 
   browser.contextMenus.onClicked.addListener(async (info, tab) => {
+    console.log("info", info);
     if (!tab?.id) return;
 
     if (info.menuItemId === MESSAGE_TYPE.VIEW_PRODUCT_METRICS) {
@@ -29,16 +35,24 @@ export default defineBackground(() => {
           name: COUPANG_COOKIE_KEY.XSRF_TOKEN,
           url: "https://wing.coupang.com",
         });
+        const sessionCookie = await browser.cookies.get({
+          name: "sxSessionId",
+          url: "https://wing.coupang.com",
+        });
 
         const message = {
           type: MESSAGE_TYPE.VIEW_PRODUCT_METRICS,
           tab: tab.id,
-          token: token,
+          token: sessionCookie ?? token,
         };
 
+        console.log("send message", message);
         await browser.tabs.sendMessage(tab.id, message);
-      } catch (err) {
-        console.error("[bg] failed to send message", err);
+      } catch (err: any) {
+        // Ignore "Receiving end does not exist" errors (tab closed/reloaded)
+        if (!err.message?.includes("Receiving end does not exist")) {
+          console.error("[bg] failed to send message", err);
+        }
       }
     }
 
@@ -50,8 +64,11 @@ export default defineBackground(() => {
 
       try {
         await browser.tabs.sendMessage(tab.id, message);
-      } catch (err) {
-        console.error("[bg] failed to send message", err);
+      } catch (err: any) {
+        // Ignore "Receiving end does not exist" errors (tab closed/reloaded)
+        if (!err.message?.includes("Receiving end does not exist")) {
+          console.error("[bg] failed to send message", err);
+        }
       }
     }
 
@@ -68,7 +85,10 @@ export default defineBackground(() => {
       ) => void
     ) => {
       (async () => {
+        console.log("msg.type", msg.type);
+        console.log("msg.type", MESSAGE_TYPE.GET_PRODUCT);
         if (msg.type === MESSAGE_TYPE.GET_PRODUCT) {
+          console.log("msg.type 여기탐");
           const keyword = (msg as GetProductMsg).keyword;
           const response = await searchProductByKeyword(keyword);
           sendResponse(response);
@@ -80,9 +100,16 @@ export default defineBackground(() => {
   );
 
   browser.webNavigation.onHistoryStateUpdated.addListener((details) => {
-    browser.tabs.sendMessage(details.tabId, {
-      type: MESSAGE_TYPE.EXCEL_DOWNLOAD_BANNER_INIT,
-    });
+    browser.tabs
+      .sendMessage(details.tabId, {
+        type: MESSAGE_TYPE.EXCEL_DOWNLOAD_BANNER_INIT,
+      })
+      .catch((err: any) => {
+        // Ignore "Receiving end does not exist" errors (tab closed/reloaded)
+        if (!err.message?.includes("Receiving end does not exist")) {
+          console.error("[bg] failed to send navigation message", err);
+        }
+      });
   });
 });
 
@@ -113,6 +140,7 @@ const formatError = (err: any, defaultCode: string) => {
 
 const searchProductByKeyword = async (keyword: string | number) => {
   if (keyword == null || keyword === "") {
+    console.log("");
     return {
       ok: false,
       code: "NO_PRODUCT_ID",
@@ -121,12 +149,20 @@ const searchProductByKeyword = async (keyword: string | number) => {
     };
   }
   try {
+    const tokne2 = await browser.cookies.getAll({
+      url: "https://wing.coupang.com",
+    });
+    console.log("tokne2::", tokne2);
     const token = await browser.cookies.get({
       name: COUPANG_COOKIE_KEY.XSRF_TOKEN,
       url: "https://wing.coupang.com",
     });
+    const sessionCookie = await browser.cookies.get({
+      name: "sxSessionId",
+      url: "https://wing.coupang.com",
+    });
 
-    if (!token?.value) {
+    if (!token?.value || !sessionCookie?.value) {
       return {
         ok: false,
         code: "NO_XSRF_TOKEN",

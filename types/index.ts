@@ -67,7 +67,7 @@ type ProductData = {
   brandName: string;
   pv: number;
   sales: number;
-  totalSales: number;
+  totalSales?: number;
   rate: string;
 };
 export type ProductState = {
