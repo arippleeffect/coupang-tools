@@ -1,25 +1,16 @@
-/**
- * Product Metrics Parser
- *
- * Parses DOM to extract product information
- */
-
 import { SELECTORS } from "@/modules/constants/selectors";
 import type { ProductState, ProductType } from "@/types";
 
-/**
- * Convert HTMLLIElement collection to ProductState array
- */
 export function liElementsToProducts(
   list: HTMLCollectionOf<HTMLLIElement> | undefined
 ): ProductState[] {
   if (!list) return [];
 
-  // Filter for all supported structures
-  const productItems = Array.from(list).filter((el) =>
-    el.classList.contains(SELECTORS.PRODUCT_UNIT.slice(1)) ||  // www.coupang.com search
-    el.classList.contains('product-wrap') ||                   // shop.coupang.com old
-    el.classList.contains('product-wrapper')                   // shop.coupang.com new
+  const productItems = Array.from(list).filter(
+    (el) =>
+      el.classList.contains(SELECTORS.PRODUCT_UNIT.slice(1)) || // www.coupang.com search
+      el.classList.contains("product-wrap") || // shop.coupang.com old
+      el.classList.contains("product-wrapper") // shop.coupang.com new
   );
 
   return productItems.map((el, index) => {
@@ -29,12 +20,10 @@ export function liElementsToProducts(
       el.dataset.id = dataId;
     }
 
-    // Try old structure first, then new Vue.js structure
     let aTag = el.children[0]?.getAttribute?.("href");
     if (!aTag) {
-      // New Vue.js structure: <li class="product-wrap"><div><a href="...">
       const anchor = el.querySelector('a[href*="/products/"]');
-      aTag = anchor?.getAttribute('href') || '';
+      aTag = anchor?.getAttribute("href") || "";
     }
 
     const match = aTag && aTag.match(/products\/(\d+)/);
@@ -44,11 +33,12 @@ export function liElementsToProducts(
       ? "AD"
       : "NORMAL";
 
-    // Try old selector first, then new Vue.js selector
-    let productName = el.querySelector<HTMLElement>(SELECTORS.PRODUCT_NAME)?.textContent?.trim();
+    let productName = el
+      .querySelector<HTMLElement>(SELECTORS.PRODUCT_NAME)
+      ?.textContent?.trim();
     if (!productName) {
-      // New Vue.js structure uses <div class="name">
-      productName = el.querySelector<HTMLElement>('.name')?.textContent?.trim() ?? "";
+      productName =
+        el.querySelector<HTMLElement>(".name")?.textContent?.trim() ?? "";
     }
 
     return {
@@ -71,7 +61,8 @@ export function getProductListElement(): HTMLElement {
 
   // Try new Vue.js structure: ul.products-list
   if (!productListElement) {
-    productListElement = document.querySelector<HTMLElement>('ul.products-list');
+    productListElement =
+      document.querySelector<HTMLElement>("ul.products-list");
   }
 
   if (!productListElement) {

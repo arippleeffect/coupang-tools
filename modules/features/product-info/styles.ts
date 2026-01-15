@@ -1,15 +1,9 @@
-/**
- * Product Info Styles
- *
- * Inject styles for product info banners
- */
-
-import { STYLE_IDS } from '@/modules/constants/selectors';
+import { STYLE_IDS } from "@/modules/constants/selectors";
 
 export function ensureHelloStyle() {
   if (document.getElementById(STYLE_IDS.HELLO)) return;
 
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.id = STYLE_IDS.HELLO;
   style.textContent = `
     .ct-hello{position:fixed;top:16px;right:16px;z-index:2147483646;padding:10px 14px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);color:#fff;font-weight:700;font-size:14px;line-height:1.2;pointer-events:none}

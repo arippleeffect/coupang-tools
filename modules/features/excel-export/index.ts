@@ -1,17 +1,8 @@
-/**
- * Excel Export Feature
- *
- * Handles vendor return Excel export and product metrics export
- */
+import { collectItems } from "./collector";
+import { processItems } from "./processor";
+import { exportVendorReturnToExcel, exportProductsToExcel } from "./exporter";
+import { ensureToast, updateToast, finishToast } from "./toast";
 
-import { collectItems } from './collector';
-import { processItems } from './processor';
-import { exportVendorReturnToExcel, exportProductsToExcel } from './exporter';
-import { ensureToast, updateToast, finishToast } from './toast';
-
-/**
- * Handle vendor return Excel export
- */
 export async function handleVendorReturnExport() {
   ensureToast();
   const pageSize = 50;
@@ -22,7 +13,7 @@ export async function handleVendorReturnExport() {
   try {
     exportVendorReturnToExcel(processedItems);
   } catch (e) {
-    console.warn('CSV 다운로드 중 오류', e);
+    console.warn("CSV 다운로드 중 오류", e);
   }
 }
 

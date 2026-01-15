@@ -1,12 +1,3 @@
-/**
- * DOM Utilities
- *
- * Common DOM manipulation and query utilities
- */
-
-/**
- * Debounce function to limit the rate of function execution
- */
 export function debounce<T extends (...args: any[]) => void>(
   fn: T,
   wait = 150
@@ -18,9 +9,6 @@ export function debounce<T extends (...args: any[]) => void>(
   };
 }
 
-/**
- * Wait for an element to appear in the DOM
- */
 export function waitForElement(
   selector: string,
   timeout = 8000
@@ -48,21 +36,15 @@ export function waitForElement(
   });
 }
 
-/**
- * Get cookie value by key
- */
 export function getCookieValue(key: string): string {
   return (
     document.cookie
-      .split('; ')
+      .split("; ")
       .find((row) => row.startsWith(`${key}=`))
-      ?.split('=')[1] || ''
+      ?.split("=")[1] || ""
   );
 }
 
-/**
- * Check if current URL is a Coupang product page
- */
 export function isCoupangProductUrl(href: string): boolean {
   try {
     const u = new URL(href, location.origin);
@@ -72,9 +54,6 @@ export function isCoupangProductUrl(href: string): boolean {
   }
 }
 
-/**
- * Extract product ID from current location
- */
 export function getPidFromLocation(): string | null {
   const m =
     location.pathname.match(/\/products\/(\d+)/) ||

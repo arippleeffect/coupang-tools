@@ -1,13 +1,6 @@
-/**
- * Error Toast for Product Info
- *
- * Simple error toast that auto-dismisses after 4 seconds
- */
-
 let toastTimeout: NodeJS.Timeout | null = null;
 
 export function showErrorToast(message: string) {
-  // Remove existing toast if any
   hideErrorToast();
 
   const toast = document.createElement("div");
@@ -35,10 +28,9 @@ export function showErrorToast(message: string) {
     <div style="opacity: 0.95;">${escapeHtml(message)}</div>
   `;
 
-  // Add animation style if not already present
-  if (!document.getElementById('ct-toast-animation-style')) {
-    const style = document.createElement('style');
-    style.id = 'ct-toast-animation-style';
+  if (!document.getElementById("ct-toast-animation-style")) {
+    const style = document.createElement("style");
+    style.id = "ct-toast-animation-style";
     style.textContent = `
       @keyframes slideIn {
         from {
@@ -56,7 +48,6 @@ export function showErrorToast(message: string) {
 
   document.body.appendChild(toast);
 
-  // Auto-dismiss after 4 seconds
   toastTimeout = setTimeout(() => {
     hideErrorToast();
   }, 4000);

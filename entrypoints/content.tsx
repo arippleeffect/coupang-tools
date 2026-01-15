@@ -1,10 +1,3 @@
-/**
- * Content Script (Refactored)
- *
- * Main entry point for content script functionality
- * Orchestrates feature modules for product metrics, product info, and excel export
- */
-
 import { MESSAGE_TYPE } from "@/types";
 import { ProductStore } from "@/modules/core/state";
 import { isCoupangProductUrl } from "@/modules/core/dom";
@@ -24,40 +17,29 @@ export default defineContentScript({
     "https://www.coupang.com/*",
   ],
   main(ctx) {
-    // Initialize product info on product detail pages
     if (isCoupangProductUrl(location.href)) {
       setupLazyProductInfo();
     }
 
-    // Initialize product store
     const store = new ProductStore();
 
-    // Subscribe to state changes for rendering
     store.subscribe((state) => {
       state.forEach((product) => {
         renderProductBox(product, createRetryHandler(store, ctx));
       });
-      console.log("ctx1", ctx);
-      console.log("state", state);
       updateBanner(ctx, state);
     });
-
-    // Message listener
     browser.runtime.onMessage.addListener(async (msg) => {
-      console.log("메시지", msg);
-      // Handle vendor return Excel export (no token required)
       if (msg.type === MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL) {
         await handleVendorReturnExport();
         return;
       }
 
-      // Check token for other message types (except EXCEL_DOWNLOAD_BANNER_INIT)
       if (msg.type !== MESSAGE_TYPE.EXCEL_DOWNLOAD_BANNER_INIT && !msg.token) {
         showLoginToast();
         return;
       }
 
-      // Reset banner and metrics
       if (msg.type === MESSAGE_TYPE.EXCEL_DOWNLOAD_BANNER_INIT) {
         store.reset();
         document
@@ -66,9 +48,7 @@ export default defineContentScript({
         resetBanner();
       }
 
-      // Handle view product metrics
       if (msg.type === MESSAGE_TYPE.VIEW_PRODUCT_METRICS) {
-        console.log("msg", msg);
         await handleViewProductMetrics(store, renderErrorToast, ctx);
       }
     });

@@ -1,9 +1,3 @@
-/**
- * Banner Feature
- *
- * Manages Excel download banner
- */
-
 import * as ReactDOM from "react-dom/client";
 import Banner from "@/modules/ui/banner";
 import { ErrorBoundary } from "@/modules/ui/error-boundary";
@@ -14,9 +8,6 @@ import { ContentScriptContext } from "#imports";
 const rootMap = new WeakMap<HTMLElement, ReactDOM.Root>();
 let bannerUi: any = null;
 
-/**
- * Update banner with current product state
- */
 export function updateBanner(
   _ctx: ContentScriptContext,
   products: ProductState[]
@@ -37,38 +28,9 @@ export function updateBanner(
   bannerUi.mount(products);
 }
 
-/**
- * Reset banner
- */
 export function resetBanner() {
   bannerUi?.remove();
   bannerUi = null;
-}
-
-/**
- * Create integrated UI (from WXT)
- */
-function createIntegratedUi(_ctx: ContentScriptContext, options: any) {
-  const host = document.createElement("div");
-  host.id = "my-extension-ui";
-
-  const shadowRoot = host.attachShadow({ mode: "open" });
-
-  if (options?.style) {
-    const style = document.createElement("style");
-    style.textContent = options.style;
-    shadowRoot.appendChild(style);
-  }
-
-  document.documentElement.appendChild(host);
-
-  return {
-    root: shadowRoot,
-    mounted: true,
-    unmount() {
-      host.remove();
-    },
-  };
 }
 
 type BannerUi = {

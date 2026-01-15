@@ -1,9 +1,3 @@
-/**
- * Product Metrics Renderer
- *
- * Handles rendering of product metrics in the DOM
- */
-
 import * as ReactDOM from "react-dom/client";
 import { Complete, Empty, Fail, Loading } from "@/modules/ui/metrics";
 import { ErrorBoundary } from "@/modules/ui/error-boundary";
@@ -12,9 +6,6 @@ import { SELECTORS } from "@/modules/constants/selectors";
 
 const rootMap = new WeakMap<HTMLElement, ReactDOM.Root>();
 
-/**
- * Render product metrics box for a product
- */
 export function renderProductBox(
   pState: ProductState,
   onRetry: (
@@ -27,7 +18,6 @@ export function renderProductBox(
 
   const elementList = Array.from(elements);
 
-  // Create metric boxes where missing
   const missingMetricBoxes = elementList.filter(
     (el) => !el.querySelector<HTMLElement>(SELECTORS.CT_METRICS)
   );
@@ -36,9 +26,10 @@ export function renderProductBox(
     const newBox = document.createElement("div");
     newBox.className = SELECTORS.CT_METRICS.slice(1);
 
-    // Handle shop.coupang.com structures
-    if (el.classList.contains("product-wrap") || el.classList.contains("product-wrapper")) {
-      // Try multiple possible containers
+    if (
+      el.classList.contains("product-wrap") ||
+      el.classList.contains("product-wrapper")
+    ) {
       const descWrapper =
         el.querySelector(".info-wrapper-desc") ||
         el.querySelector(".product-wrapper") ||
@@ -51,24 +42,20 @@ export function renderProductBox(
         return;
       }
 
-      // If no specific wrapper, try appending to anchor tag
       const anchor = el.querySelector('a[href*="/products/"]');
       if (anchor) {
         anchor.appendChild(newBox);
         return;
       }
 
-      // Last resort: append to li element
       el.appendChild(newBox);
       return;
     }
 
-    // Old structure (www.coupang.com): append to <a> tag
     const aTag = el.querySelector("a");
     aTag ? aTag.appendChild(newBox) : el.appendChild(newBox);
   });
 
-  // Render content based on state
   elementList.forEach((el) => {
     const box = el.querySelector<HTMLElement>(SELECTORS.CT_METRICS);
     if (!box) return;
@@ -99,9 +86,6 @@ export function renderProductBox(
   });
 }
 
-/**
- * Initialize metrics styles
- */
 export function initMetricsStyle() {
   const styleId = "ct-metrics-style";
   if (document.getElementById(styleId)) return;

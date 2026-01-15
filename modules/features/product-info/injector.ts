@@ -1,15 +1,5 @@
-/**
- * Product Info Injector
- *
- * Injects product information banners on product detail pages
- */
-
 import { SELECTORS } from "@/modules/constants/selectors";
-import { formatCurrencyKRW } from "@/modules/ui/metrics";
 
-/**
- * Inject hello banner after header
- */
 export function injectHelloBannerAfterHeader(
   text: string = "안녕하세요"
 ): boolean {
@@ -32,9 +22,6 @@ export function injectHelloBannerAfterHeader(
   return true;
 }
 
-/**
- * Inject product info after header
- */
 export function injectProductInfoAfterHeader(info: {
   productId: string;
   brandName?: string;
@@ -48,7 +35,6 @@ export function injectProductInfoAfterHeader(info: {
   ) as HTMLElement | null;
   if (!root) return false;
 
-  // Remove existing banner to avoid duplicates
   const prev = root.querySelector(SELECTORS.CT_PRODINFO);
   if (prev) prev.remove();
 
@@ -93,9 +79,6 @@ export function injectProductInfoAfterHeader(info: {
   return true;
 }
 
-/**
- * Inject loading product info
- */
 export function injectLoadingProductInfo(): boolean {
   const root = document.querySelector(
     SELECTORS.PRODUCT_DETAIL_CONTAINER
@@ -127,9 +110,6 @@ export function injectLoadingProductInfo(): boolean {
   return true;
 }
 
-/**
- * Inject fail product info (with retry button)
- */
 export function injectFailProductInfo(pid: string): boolean {
   const root = document.querySelector(
     SELECTORS.PRODUCT_DETAIL_CONTAINER
@@ -158,9 +138,6 @@ export function injectFailProductInfo(pid: string): boolean {
   return true;
 }
 
-/**
- * Inject empty product info (no data available)
- */
 export function injectEmptyProductInfo(): boolean {
   const root = document.querySelector(
     SELECTORS.PRODUCT_DETAIL_CONTAINER
@@ -187,9 +164,6 @@ export function injectEmptyProductInfo(): boolean {
   return true;
 }
 
-/**
- * Inject login required product info (inline with login link)
- */
 export function injectLoginRequiredProductInfo(): boolean {
   const root = document.querySelector(
     SELECTORS.PRODUCT_DETAIL_CONTAINER

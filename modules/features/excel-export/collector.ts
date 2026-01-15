@@ -1,14 +1,5 @@
-/**
- * Excel Export Collector
- *
- * Collects vendor return items from the API
- */
+import { getCookieValue } from "@/modules/core/dom";
 
-import { getCookieValue } from '@/modules/core/dom';
-
-/**
- * Fetch item list from vendor-return API
- */
 async function fetchItemList({
   pageSize,
   pageIndex,
@@ -18,22 +9,23 @@ async function fetchItemList({
   pageIndex: number;
   token: string;
 }): Promise<Response> {
-  return fetch('https://wing.coupang.com/tenants/rfm/goldfish/vendor-return/itemList', {
-    headers: {
-      accept: 'application/json, text/plain, */*',
-      'content-type': 'application/json',
-      'x-xsrf-token': decodeURIComponent(token),
-    },
-    referrer: 'https://wing.coupang.com/tenants/rfm/goldfish/vendor-return/creation',
-    body: JSON.stringify({ pageSize, pageIndex }),
-    method: 'POST',
-    credentials: 'include',
-  });
+  return fetch(
+    "https://wing.coupang.com/tenants/rfm/goldfish/vendor-return/itemList",
+    {
+      headers: {
+        accept: "application/json, text/plain, */*",
+        "content-type": "application/json",
+        "x-xsrf-token": decodeURIComponent(token),
+      },
+      referrer:
+        "https://wing.coupang.com/tenants/rfm/goldfish/vendor-return/creation",
+      body: JSON.stringify({ pageSize, pageIndex }),
+      method: "POST",
+      credentials: "include",
+    }
+  );
 }
 
-/**
- * Collect all items with pagination
- */
 export async function collectItems(
   pageSize: number,
   updateToast: (count: number, currentSize: number, totalSize: number) => void,
@@ -43,7 +35,7 @@ export async function collectItems(
   let pageIndex = 0;
 
   while (true) {
-    const token = getCookieValue('XSRF-TOKEN');
+    const token = getCookieValue("XSRF-TOKEN");
     try {
       const res = await fetchItemList({ pageSize, pageIndex, token });
 
@@ -70,7 +62,7 @@ export async function collectItems(
 
       pageIndex += 1;
     } catch (e) {
-      console.warn('요청 중 예외 발생 - 중단합니다.', e);
+      console.warn("요청 중 예외 발생 - 중단합니다.", e);
       finishToast(false, results.length);
       break;
     }

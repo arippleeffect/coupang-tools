@@ -26,7 +26,6 @@ export default defineBackground(() => {
   });
 
   browser.contextMenus.onClicked.addListener(async (info, tab) => {
-    console.log("info", info);
     if (!tab?.id) return;
 
     if (info.menuItemId === MESSAGE_TYPE.VIEW_PRODUCT_METRICS) {
@@ -46,7 +45,6 @@ export default defineBackground(() => {
           token: sessionCookie ?? token,
         };
 
-        console.log("send message", message);
         await browser.tabs.sendMessage(tab.id, message);
       } catch (err: any) {
         // Ignore "Receiving end does not exist" errors (tab closed/reloaded)
@@ -85,10 +83,7 @@ export default defineBackground(() => {
       ) => void
     ) => {
       (async () => {
-        console.log("msg.type", msg.type);
-        console.log("msg.type", MESSAGE_TYPE.GET_PRODUCT);
         if (msg.type === MESSAGE_TYPE.GET_PRODUCT) {
-          console.log("msg.type 여기탐");
           const keyword = (msg as GetProductMsg).keyword;
           const response = await searchProductByKeyword(keyword);
           sendResponse(response);
@@ -140,7 +135,6 @@ const formatError = (err: any, defaultCode: string) => {
 
 const searchProductByKeyword = async (keyword: string | number) => {
   if (keyword == null || keyword === "") {
-    console.log("");
     return {
       ok: false,
       code: "NO_PRODUCT_ID",
@@ -152,7 +146,6 @@ const searchProductByKeyword = async (keyword: string | number) => {
     const tokne2 = await browser.cookies.getAll({
       url: "https://wing.coupang.com",
     });
-    console.log("tokne2::", tokne2);
     const token = await browser.cookies.get({
       name: COUPANG_COOKIE_KEY.XSRF_TOKEN,
       url: "https://wing.coupang.com",
@@ -217,7 +210,6 @@ async function fetchPreMatchingSearch<T>({
     } catch (error) {
       throw formatError(error, "PRE_MATCHING_SEARCH_FAILED");
     }
-    console.log("res", res);
     const message =
       res.status === 429 ? "요청이 많아 서버가 잠시 응답을 제한했습니다." : "";
     throw formatError(
