@@ -16,6 +16,66 @@ import { ensureHelloStyle } from "./styles";
 import { SELECTORS } from "@/modules/constants/selectors";
 import { isLoginRequiredError } from "@/modules/features/login/login-handler";
 import { showErrorToast } from "./toast-error";
+import { isLicenseValid } from "@/modules/core/license-storage";
+
+async function injectLicenseRequiredBanner() {
+  const root = document.querySelector(SELECTORS.PRODUCT_DETAIL_CONTAINER);
+  if (!root) return;
+
+  const existing = root.querySelector(SELECTORS.CT_PRODINFO);
+  if (existing) existing.remove();
+
+  const banner = document.createElement("div");
+  banner.className = "ct-prodinfo";
+  banner.style.cssText = `
+    background: #fef2f2;
+    border: 2px solid #fca5a5;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    text-align: center;
+  `;
+
+  banner.innerHTML = `
+    <div style="font-size: 48px; margin-bottom: 12px;">🔐</div>
+    <h3 style="font-size: 18px; font-weight: 700; color: #991b1b; margin-bottom: 8px;">
+      라이센스 활성화 필요
+    </h3>
+    <p style="font-size: 14px; color: #991b1b; margin-bottom: 16px;">
+      이 기능을 사용하려면 라이센스를 활성화해야 합니다.
+    </p>
+    <button class="license-activate-btn" style="
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    ">
+      라이센스 활성화
+    </button>
+  `;
+
+  const btn = banner.querySelector(".license-activate-btn") as HTMLButtonElement;
+  btn.onmouseover = () => {
+    btn.style.background = "#2563eb";
+  };
+  btn.onmouseout = () => {
+    btn.style.background = "#3b82f6";
+  };
+  btn.onclick = () => {
+    const licensePageUrl = browser.runtime.getURL("license.html");
+    window.open(licensePageUrl, "_blank");
+  };
+
+  const anchor = root.querySelector(SELECTORS.PRODUCT_TITLE);
+  if (anchor?.parentElement) {
+    anchor.parentElement.insertBefore(banner, anchor.nextSibling);
+  }
+}
 
 export async function fetchAndInjectProductInfo(pid: string) {
   try {
@@ -70,16 +130,31 @@ export function setupLazyProductInfo() {
     } catch {}
 
     ensureHelloStyle();
+
+    // Check license FIRST to avoid flickering
+    const hasLicense = await isLicenseValid();
+    if (!hasLicense) {
+      console.log("[Product Info] No valid license, showing activation banner");
+      await injectLicenseRequiredBanner();
+      return;
+    }
+
+    // Only show loading if license is valid
     injectLoadingProductInfo();
     fetchAndInjectProductInfo(pid);
 
     const root = document.querySelector(SELECTORS.PRODUCT_DETAIL_CONTAINER);
     if (!root) return;
 
-    const ensure = debounce(() => {
+    const ensure = debounce(async () => {
       const banner = root.querySelector(SELECTORS.CT_PRODINFO);
       const curPid = getPidFromLocation();
       if (!banner && curPid) {
+        const hasLicense = await isLicenseValid();
+        if (!hasLicense) {
+          await injectLicenseRequiredBanner();
+          return;
+        }
         injectLoadingProductInfo();
         fetchAndInjectProductInfo(curPid);
       }
@@ -89,9 +164,14 @@ export function setupLazyProductInfo() {
     mo.observe(root, { childList: true, subtree: true });
 
     const reMount = () =>
-      setTimeout(() => {
+      setTimeout(async () => {
         const npid = getPidFromLocation();
         if (npid) {
+          const hasLicense = await isLicenseValid();
+          if (!hasLicense) {
+            await injectLicenseRequiredBanner();
+            return;
+          }
           injectLoadingProductInfo();
           fetchAndInjectProductInfo(npid);
         }

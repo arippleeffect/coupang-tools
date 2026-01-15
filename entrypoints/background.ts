@@ -5,30 +5,96 @@ import {
   MESSAGE_TYPE,
   MessageResponse,
   PreMatchingSearchResponse,
+  LicenseCheckResponse,
+  LicenseActivateRequest,
+  LicenseActivateResponse,
 } from "@/types";
+import { isLicenseValid, getLicense } from "@/modules/core/license-storage";
+import { activateLicense, deactivateLicense } from "@/modules/api/license";
+import { getBrowserId } from "@/modules/core/browser-id";
+import {
+  startPeriodicValidation,
+  validateLicenseOnAction,
+  invalidateValidationCache,
+} from "@/modules/core/license-validator";
 
 export default defineBackground(() => {
-  browser.contextMenus.create({
-    id: MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL,
-    title: "로켓그로스 반출 액셀 다운로드",
-    contexts: ["page"],
-    documentUrlPatterns: ["https://wing.coupang.com/*"],
+  // Start periodic license validation
+  startPeriodicValidation();
+
+  // Handle extension icon click - always open license page
+  browser.action.onClicked.addListener(async () => {
+    const licensePageUrl = browser.runtime.getURL("license.html");
+    await browser.tabs.create({ url: licensePageUrl });
   });
 
-  browser.contextMenus.create({
-    id: MESSAGE_TYPE.VIEW_PRODUCT_METRICS,
-    title: "쿠팡 상품 지표보기",
-    contexts: ["page"],
-    documentUrlPatterns: [
-      "https://www.coupang.com/*",
-      "https://shop.coupang.com/*",
-    ],
+  // Initialize context menus only if license is valid
+  initializeContextMenus();
+
+  // Re-initialize context menus when license status changes
+  browser.storage.onChanged.addListener(async (changes, areaName) => {
+    if (areaName === "local" && changes.ct_license) {
+      console.log("[bg] License storage changed, re-initializing menus");
+      // Just update menus, validation will happen periodically or on action
+      await initializeContextMenus();
+    }
   });
+
+  async function initializeContextMenus() {
+    const hasLicense = await isLicenseValid();
+
+    // Remove all existing menus first
+    await browser.contextMenus.removeAll();
+
+    if (!hasLicense) {
+      // No license - show only activation menu
+      browser.contextMenus.create({
+        id: "activate_license",
+        title: "라이센스 활성화",
+        contexts: ["page"],
+      });
+      return;
+    }
+
+    // Has license - show all menus
+    browser.contextMenus.create({
+      id: MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL,
+      title: "로켓그로스 반출 액셀 다운로드",
+      contexts: ["page"],
+      documentUrlPatterns: ["https://wing.coupang.com/*"],
+    });
+
+    browser.contextMenus.create({
+      id: MESSAGE_TYPE.VIEW_PRODUCT_METRICS,
+      title: "쿠팡 상품 지표보기",
+      contexts: ["page"],
+      documentUrlPatterns: [
+        "https://www.coupang.com/*",
+        "https://shop.coupang.com/*",
+      ],
+    });
+  }
 
   browser.contextMenus.onClicked.addListener(async (info, tab) => {
     if (!tab?.id) return;
 
+    // Handle activation menu click
+    if (info.menuItemId === "activate_license") {
+      const licensePageUrl = browser.runtime.getURL("license.html");
+      await browser.tabs.create({ url: licensePageUrl });
+      return;
+    }
+
     if (info.menuItemId === MESSAGE_TYPE.VIEW_PRODUCT_METRICS) {
+      // Validate license before processing
+      const isValid = await validateLicenseOnAction();
+      if (!isValid) {
+        console.warn("[bg] License validation failed for VIEW_PRODUCT_METRICS");
+        // Re-initialize context menus to show activation menu
+        await initializeContextMenus();
+        return;
+      }
+
       try {
         const token = await browser.cookies.get({
           name: COUPANG_COOKIE_KEY.XSRF_TOKEN,
@@ -55,6 +121,17 @@ export default defineBackground(() => {
     }
 
     if (info.menuItemId === MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL) {
+      // Validate license before processing
+      const isValid = await validateLicenseOnAction();
+      if (!isValid) {
+        console.warn(
+          "[bg] License validation failed for ROCKETGROSS_EXPORT_EXCEL"
+        );
+        // Re-initialize context menus to show activation menu
+        await initializeContextMenus();
+        return;
+      }
+
       const message = {
         type: MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL,
         tabId: tab.id,
@@ -76,10 +153,22 @@ export default defineBackground(() => {
 
   browser.runtime.onMessage.addListener(
     (
-      msg: GetProductMetricsMsg | GetProductMsg,
+      msg:
+        | GetProductMetricsMsg
+        | GetProductMsg
+        | { type: MESSAGE_TYPE.LICENSE_CHECK }
+        | {
+            type: MESSAGE_TYPE.LICENSE_ACTIVATE;
+            email: string;
+            licenseKey: string;
+          }
+        | { type: MESSAGE_TYPE.LICENSE_DEACTIVATE },
       sender,
       sendResponse: (
-        response: MessageResponse<PreMatchingSearchResponse>
+        response:
+          | MessageResponse<PreMatchingSearchResponse>
+          | LicenseCheckResponse
+          | LicenseActivateResponse
       ) => void
     ) => {
       (async () => {
@@ -87,6 +176,55 @@ export default defineBackground(() => {
           const keyword = (msg as GetProductMsg).keyword;
           const response = await searchProductByKeyword(keyword);
           sendResponse(response);
+        }
+
+        if (msg.type === MESSAGE_TYPE.LICENSE_CHECK) {
+          const isValid = await isLicenseValid();
+          const license = await getLicense();
+          sendResponse({
+            ok: isValid,
+            license: license || undefined,
+          });
+        }
+
+        if (msg.type === MESSAGE_TYPE.LICENSE_ACTIVATE) {
+          const { email, licenseKey } = msg as {
+            type: MESSAGE_TYPE.LICENSE_ACTIVATE;
+            email: string;
+            licenseKey: string;
+          };
+          const browserId = await getBrowserId();
+          const response = await activateLicense({
+            email,
+            licenseKey,
+            browserId,
+          });
+
+          // Invalidate cache after activation
+          if (response.ok) {
+            invalidateValidationCache();
+          }
+
+          sendResponse(response);
+        }
+
+        if (msg.type === MESSAGE_TYPE.LICENSE_DEACTIVATE) {
+          const license = await getLicense();
+          if (license) {
+            const response = await deactivateLicense(
+              license.email,
+              license.licenseKey
+            );
+
+            // Invalidate cache after deactivation
+            if (response.ok) {
+              invalidateValidationCache();
+            }
+
+            sendResponse({ ok: response.ok, message: response.message });
+          } else {
+            sendResponse({ ok: false, message: "라이센스가 없습니다." });
+          }
         }
       })();
 

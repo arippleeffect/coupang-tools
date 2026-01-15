@@ -4,6 +4,9 @@ export enum MESSAGE_TYPE {
   GET_PRODUCT = "GET_PRODUCT",
   EXCEL_DOWNLOAD_BANNER_INIT = "EXCEL_DOWNLOAD_BANNER_INIT",
   PCID_INIT = "PCID_INIT",
+  LICENSE_CHECK = "LICENSE_CHECK",
+  LICENSE_ACTIVATE = "LICENSE_ACTIVATE",
+  LICENSE_DEACTIVATE = "LICENSE_DEACTIVATE",
 }
 
 export type GetProductMetricsMsg = {
@@ -105,4 +108,35 @@ export type CoupangProduct = {
   salesLast28d: number;
   deliveryMethod: string;
   attributeTypes: string | null;
+};
+
+// License types
+export type LicenseStatus = "ACTIVE" | "INACTIVE" | "EXPIRED" | "INVALID";
+
+export type LicenseInfo = {
+  email: string;
+  licenseKey: string;
+  status: LicenseStatus;
+  activatedAt?: string;
+  expiresAt?: string;
+  browserId?: string;
+};
+
+export type LicenseCheckResponse = {
+  ok: boolean;
+  license?: LicenseInfo;
+  message?: string;
+};
+
+export type LicenseActivateRequest = {
+  email: string;
+  licenseKey: string;
+  browserId: string;
+};
+
+export type LicenseActivateResponse = {
+  ok: boolean;
+  license?: LicenseInfo;
+  message?: string;
+  error?: string;
 };

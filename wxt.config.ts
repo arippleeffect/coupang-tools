@@ -4,7 +4,7 @@ export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   manifestVersion: 3,
   manifest: {
-    name: "쿠팡 도구 모음",
+    name: "쿠팡 스탯 체크",
     version: "1.0",
 
     permissions: [
@@ -13,6 +13,7 @@ export default defineConfig({
       "cookies",
       "webNavigation",
       "notifications",
+      "storage",
     ],
     host_permissions: ["https://wing.coupang.com/*"],
   },
