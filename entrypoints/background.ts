@@ -53,14 +53,6 @@ export default defineBackground(() => {
       return;
     }
 
-    // Has license - show all menus
-    browser.contextMenus.create({
-      id: MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL,
-      title: "로켓그로스 반출 액셀 다운로드",
-      contexts: ["page"],
-      documentUrlPatterns: ["https://wing.coupang.com/*"],
-    });
-
     browser.contextMenus.create({
       id: MESSAGE_TYPE.VIEW_PRODUCT_METRICS,
       title: "쿠팡 상품 지표보기",
@@ -111,33 +103,6 @@ export default defineBackground(() => {
 
         console.log("message::", message);
 
-        await browser.tabs.sendMessage(tab.id, message);
-      } catch (err: any) {
-        // Ignore "Receiving end does not exist" errors (tab closed/reloaded)
-        if (!err.message?.includes("Receiving end does not exist")) {
-          console.error("[bg] failed to send message", err);
-        }
-      }
-    }
-
-    if (info.menuItemId === MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL) {
-      // Validate license before processing
-      const isValid = await validateLicenseOnAction();
-      if (!isValid) {
-        console.warn(
-          "[bg] License validation failed for ROCKETGROSS_EXPORT_EXCEL"
-        );
-        // Re-initialize context menus to show activation menu
-        await initializeContextMenus();
-        return;
-      }
-
-      const message = {
-        type: MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL,
-        tabId: tab.id,
-      };
-
-      try {
         await browser.tabs.sendMessage(tab.id, message);
       } catch (err: any) {
         // Ignore "Receiving end does not exist" errors (tab closed/reloaded)
