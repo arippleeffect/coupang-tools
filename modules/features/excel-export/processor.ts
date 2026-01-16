@@ -23,10 +23,20 @@ const fcCodesToMerge = new Set([
   "SFDJN3",
 ]);
 
+/**
+ * 대표 FC 코드 여부 확인
+ * @param code - FC 코드
+ * @returns 대표 FC 코드 여부
+ */
 function isRepresentativeFcCode(code: string): boolean {
   return code.startsWith("XRC") || code.startsWith("CHA9");
 }
 
+/**
+ * 반출 아이템 FC 코드 병합 처리
+ * @param items - 아이템 배열
+ * @returns 처리된 아이템 배열
+ */
 export function processItems(items: any[]): any[] {
   return items.map((item) => {
     if (

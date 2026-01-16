@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>쿠팡 스탯 체크 - 라이센스 활성화</title>
+    <title>쿠팡 지표 분석 - 라이센스 활성화</title>
     <style>
       * {
         margin: 0;
@@ -13,8 +13,8 @@
 
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          "Helvetica Neue", Arial, sans-serif;
-        background: #fafafa;
+          "Helvetica Neue", Arial, "Noto Sans KR", sans-serif;
+        background: hsl(0 0% 98%);
         min-height: 100vh;
         display: flex;
         align-items: center;
@@ -24,216 +24,162 @@
 
       .container {
         background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-        max-width: 480px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        max-width: 440px;
         width: 100%;
-        overflow: hidden;
-        border: 1px solid rgba(0, 0, 0, 0.04);
+        border: 1px solid hsl(0 0% 90%);
       }
 
       .header {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        color: white;
-        padding: 36px 32px;
+        padding: 32px 32px 24px;
         text-align: center;
-        position: relative;
-        overflow: hidden;
+        border-bottom: 1px solid hsl(0 0% 92%);
       }
 
-      .header::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 200px;
-        height: 200px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
-      }
-
-      .header::after {
-        content: "";
-        position: absolute;
-        bottom: -30%;
-        left: -10%;
-        width: 150px;
-        height: 150px;
-        background: rgba(255, 255, 255, 0.08);
-        border-radius: 50%;
-      }
-
-      .header-icon {
-        width: 64px;
-        height: 64px;
+      .logo {
+        width: 48px;
+        height: 48px;
         margin: 0 auto 16px;
-        position: relative;
-        z-index: 1;
+        background: hsl(221.2 83.2% 53.3%);
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 16px;
-        backdrop-filter: blur(10px);
       }
 
-      .header-icon svg {
-        width: 36px;
-        height: 36px;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      .logo svg {
+        width: 24px;
+        height: 24px;
+        stroke: white;
+        stroke-width: 2;
+        fill: none;
       }
 
       .header h1 {
         font-size: 24px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        letter-spacing: -0.02em;
-        position: relative;
-        z-index: 1;
+        font-weight: 600;
+        color: hsl(0 0% 9%);
+        margin-bottom: 4px;
+        letter-spacing: -0.025em;
       }
 
       .header p {
-        font-size: 15px;
-        opacity: 0.95;
-        font-weight: 500;
-        position: relative;
-        z-index: 1;
+        font-size: 14px;
+        color: hsl(0 0% 45%);
+        font-weight: 400;
       }
 
       .form-container {
-        padding: 32px;
+        padding: 24px 32px 32px;
       }
 
       .form-group {
-        margin-bottom: 24px;
+        margin-bottom: 20px;
       }
 
       .form-group label {
         display: block;
-        font-size: 13px;
-        font-weight: 600;
-        color: #374151;
+        font-size: 14px;
+        font-weight: 500;
+        color: hsl(0 0% 9%);
         margin-bottom: 8px;
       }
 
       .form-group input {
         width: 100%;
-        padding: 13px 16px;
+        padding: 10px 12px;
         font-size: 14px;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 10px;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid hsl(0 0% 90%);
+        border-radius: 6px;
+        transition: all 0.15s ease;
         background: white;
-        color: #1f2937;
+        color: hsl(0 0% 9%);
+        font-family: inherit;
       }
 
       .form-group input:focus {
         outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        border-color: hsl(221.2 83.2% 53.3%);
+        box-shadow: 0 0 0 3px hsl(221.2 83.2% 53.3% / 0.1);
       }
 
       .form-group input::placeholder {
-        color: #9ca3af;
+        color: hsl(0 0% 64%);
+      }
+
+      .help-text {
+        font-size: 13px;
+        color: hsl(0 0% 45%);
+        margin-top: 6px;
       }
 
       .btn {
         width: 100%;
-        padding: 13px 16px;
+        padding: 10px 16px;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 500;
         border: none;
-        border-radius: 10px;
+        border-radius: 6px;
         cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.15s ease;
         margin-bottom: 8px;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .btn::before {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-      }
-
-      .btn:active::before {
-        width: 300px;
-        height: 300px;
+        font-family: inherit;
       }
 
       .btn-primary {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        background: hsl(221.2 83.2% 53.3%);
         color: white;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
       }
 
       .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+        background: hsl(221.2 83.2% 48%);
       }
 
       .btn-primary:active {
-        transform: translateY(0);
+        background: hsl(221.2 83.2% 43%);
       }
 
       .btn-primary:disabled {
         opacity: 0.5;
         cursor: not-allowed;
-        transform: none;
       }
 
       .btn-secondary {
         background: white;
-        color: #4b5563;
-        border: 1.5px solid #e5e7eb;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        color: hsl(0 0% 9%);
+        border: 1px solid hsl(0 0% 90%);
       }
 
       .btn-secondary:hover {
-        background: #f9fafb;
-        border-color: #d1d5db;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-      }
-
-      .btn-secondary:active {
-        transform: translateY(0);
+        background: hsl(0 0% 96%);
       }
 
       .alert {
-        padding: 14px 16px;
-        border-radius: 10px;
+        padding: 12px 16px;
+        border-radius: 6px;
         margin-bottom: 20px;
-        font-size: 13px;
-        line-height: 1.6;
-        border: 1.5px solid;
-        font-weight: 500;
+        font-size: 14px;
+        line-height: 1.5;
+        border: 1px solid;
       }
 
       .alert-success {
-        background: #dbeafe;
-        color: #1e40af;
-        border-color: #93c5fd;
+        background: hsl(142 76% 96%);
+        color: hsl(142 71% 25%);
+        border-color: hsl(142 76% 85%);
       }
 
       .alert-error {
-        background: #fee2e2;
-        color: #991b1b;
-        border-color: #fca5a5;
+        background: hsl(0 86% 97%);
+        color: hsl(0 74% 42%);
+        border-color: hsl(0 86% 90%);
       }
 
       .alert-info {
-        background: #dbeafe;
-        color: #1e40af;
-        border-color: #93c5fd;
+        background: hsl(221 91% 96%);
+        color: hsl(221 83% 35%);
+        border-color: hsl(221 91% 85%);
       }
 
       .hidden {
@@ -242,13 +188,13 @@
 
       .spinner {
         display: inline-block;
-        width: 18px;
-        height: 18px;
-        border: 2.5px solid rgba(255, 255, 255, 0.3);
-        border-top-color: #fff;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
         border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        margin-right: 10px;
+        animation: spin 0.6s linear infinite;
+        margin-right: 8px;
         vertical-align: middle;
       }
 
@@ -258,67 +204,58 @@
         }
       }
 
-      .help-text {
-        font-size: 12px;
-        color: #6b7280;
-        margin-top: 6px;
-        font-weight: 500;
-      }
-
       .divider {
         height: 1px;
-        background: #f3f4f6;
+        background: hsl(0 0% 92%);
         margin: 24px 0;
       }
 
       .info-section {
-        background: #f9fafb;
-        padding: 18px;
-        border-radius: 12px;
-        margin-top: 24px;
-        border: 1px solid rgba(0, 0, 0, 0.04);
+        background: hsl(0 0% 96%);
+        padding: 16px;
+        border-radius: 6px;
+        margin-top: 20px;
+        border: 1px solid hsl(0 0% 92%);
       }
 
       .info-section h3 {
         font-size: 13px;
-        font-weight: 700;
-        color: #374151;
-        margin-bottom: 8px;
+        font-weight: 500;
+        color: hsl(0 0% 9%);
+        margin-bottom: 6px;
       }
 
       .info-section p {
         font-size: 13px;
-        color: #6b7280;
-        line-height: 1.6;
-        font-weight: 500;
+        color: hsl(0 0% 45%);
+        line-height: 1.5;
       }
 
       .demo-keys {
-        background: #fffbeb;
-        border: 1.5px solid #fde047;
-        padding: 18px;
-        border-radius: 12px;
-        margin-top: 16px;
+        background: hsl(47 95% 96%);
+        border: 1px solid hsl(47 95% 85%);
+        padding: 16px;
+        border-radius: 6px;
+        margin-top: 20px;
       }
 
       .demo-keys h4 {
         font-size: 13px;
-        font-weight: 700;
-        color: #92400e;
-        margin-bottom: 12px;
+        font-weight: 500;
+        color: hsl(38 92% 27%);
+        margin-bottom: 10px;
       }
 
       .demo-keys code {
         display: block;
         font-family: "SF Mono", "Monaco", "Courier New", monospace;
         font-size: 12px;
-        color: #78350f;
+        color: hsl(38 92% 27%);
         background: white;
-        padding: 10px 12px;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        border: 1px solid #fde047;
-        font-weight: 500;
+        padding: 8px 10px;
+        border-radius: 4px;
+        margin-bottom: 6px;
+        border: 1px solid hsl(47 95% 85%);
       }
 
       .demo-keys code:last-child {
@@ -326,32 +263,30 @@
       }
 
       .warning-box {
-        background: #fef2f2;
-        border: 1.5px solid #fca5a5;
-        border-left: 3px solid #ef4444;
-        padding: 18px;
-        border-radius: 12px;
+        background: hsl(0 86% 97%);
+        border: 1px solid hsl(0 86% 90%);
+        padding: 16px;
+        border-radius: 6px;
         margin-top: 20px;
       }
 
       .warning-box h3 {
         font-size: 13px;
-        font-weight: 700;
-        color: #991b1b;
-        margin-bottom: 12px;
+        font-weight: 500;
+        color: hsl(0 74% 42%);
+        margin-bottom: 10px;
       }
 
       .warning-box ul {
         margin: 0;
-        padding-left: 20px;
+        padding-left: 18px;
       }
 
       .warning-box li {
         font-size: 13px;
-        color: #991b1b;
+        color: hsl(0 74% 42%);
         line-height: 1.6;
-        margin-bottom: 8px;
-        font-weight: 500;
+        margin-bottom: 6px;
       }
 
       .warning-box li:last-child {
@@ -359,14 +294,30 @@
       }
 
       .warning-box li strong {
-        font-weight: 700;
+        font-weight: 500;
+      }
+
+      .footer {
+        text-align: center;
+        padding: 16px;
+        color: hsl(0 0% 64%);
+        font-size: 12px;
+        background: hsl(0 0% 98%);
+        border-top: 1px solid hsl(0 0% 92%);
       }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1>쿠팡 스탯 체크</h1>
+        <div class="logo">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+        </div>
+        <h1>쿠팡 지표 분석</h1>
         <p>라이센스 활성화</p>
       </div>
 
@@ -395,8 +346,6 @@
               name="licenseKey"
               placeholder="XXXX-XXXX-XXXX-XXXX"
               required
-              pattern="[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}"
-              style="text-transform: uppercase"
             />
             <div class="help-text">이메일로 받은 라이센스 키를 입력하세요</div>
           </div>
@@ -413,15 +362,15 @@
         <div class="info-section">
           <h3>라이센스 키 받는 방법</h3>
           <p>
-            구매 후 이메일로 전송됩니다. 이메일이 도착하지 않았다면 스팸 폴더를
+            이메일로 전송됩니다. 이메일이 도착하지 않았다면 스팸 폴더를
             확인해주세요.
           </p>
         </div>
 
         <div class="warning-box">
-          <h3>⚠️ 중요 안내</h3>
+          <h3>중요 안내</h3>
           <ul>
-            <li><strong>양도 및 공유 금지:</strong> 구매자 본인만 사용 가능</li>
+            <li><strong>양도 및 공유 금지:</strong> 지급받은 본인만 사용 가능</li>
             <li>
               <strong>단일 브라우저 제한:</strong> 하나의 라이센스는 하나의
               브라우저에서만 사용 가능
@@ -430,34 +379,16 @@
               <strong>재활성화:</strong> 다른 브라우저에서 활성화하면 기존
               브라우저는 자동 비활성화됨
             </li>
-            <li>위반 시 라이센스 영구 정지 및 환불 불가</li>
+            <li>위반 시 라이센스 영구 정지</li>
           </ul>
         </div>
-
-        <div class="demo-keys">
-          <h4>테스트용 라이센스 (개발용)</h4>
-          <code>Email: test@example.com</code>
-          <code>Key: TEST-1234-5678-ABCD</code>
-        </div>
       </div>
+
+      <div class="footer">© 2026 쿠팡 지표 분석</div>
     </div>
 
     <script type="module">
-      // Mock license API
-      const MOCK_VALID_LICENSES = [
-        {
-          email: "test@example.com",
-          licenseKey: "TEST-1234-5678-ABCD",
-        },
-        {
-          email: "demo@example.com",
-          licenseKey: "DEMO-ABCD-1234-EFGH",
-        },
-      ];
-
       async function activateLicense(email, licenseKey) {
-        // Send message to background script to activate license
-        // Background script will get browserId and call the API
         console.log("[License Page] Sending activation request to background");
         return new Promise((resolve) => {
           chrome.runtime.sendMessage(
@@ -478,7 +409,6 @@
         await chrome.storage.local.set({ ct_license: license });
       }
 
-      // Initialize
       const licenseForm = document.getElementById("licenseForm");
       const emailInput = document.getElementById("email");
       const licenseKeyInput = document.getElementById("licenseKey");
@@ -486,31 +416,21 @@
       const cancelBtn = document.getElementById("cancelBtn");
       const alertContainer = document.getElementById("alertContainer");
 
-      // Auto-format license key
-      licenseKeyInput.addEventListener("input", (e) => {
-        let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-        if (value.length > 0) {
-          value = value.match(/.{1,4}/g)?.join("-") || value;
-        }
-        if (value.length > 19) {
-          value = value.substring(0, 19);
-        }
-        e.target.value = value;
-      });
-
       function showAlert(message, type = "info") {
         alertContainer.innerHTML = `
         <div class="alert alert-${type}">
           ${message}
         </div>
       `;
-        setTimeout(() => {
-          alertContainer.innerHTML = "";
-        }, 5000);
+      }
+
+      function clearAlert() {
+        alertContainer.innerHTML = "";
       }
 
       licenseForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+        clearAlert();
 
         const email = emailInput.value.trim();
         const licenseKey = licenseKeyInput.value.trim();
@@ -521,34 +441,36 @@
         }
 
         activateBtn.disabled = true;
-        activateBtn.innerHTML = `
-        <span class="spinner"></span>
-        활성화 중...
-      `;
+        activateBtn.innerHTML = '<span class="spinner"></span>활성화 중...';
 
         try {
           const response = await activateLicense(email, licenseKey);
 
           if (response.ok && response.license) {
             await saveLicense(response.license);
+
             showAlert(
-              "✅ 라이센스가 성공적으로 활성화되었습니다! 잠시 후 창이 닫힙니다.",
+              response.message || "라이센스가 성공적으로 활성화되었습니다.",
               "success"
             );
+
+            emailInput.value = "";
+            licenseKeyInput.value = "";
+
             setTimeout(() => {
               window.close();
             }, 2000);
           } else {
             showAlert(
-              response.message || "라이센스 활성화에 실패했습니다.",
+              response.message ||
+                "라이센스 활성화에 실패했습니다. 다시 시도해주세요.",
               "error"
             );
-            activateBtn.disabled = false;
-            activateBtn.innerHTML = "라이센스 활성화";
           }
         } catch (error) {
-          console.error("License activation error:", error);
-          showAlert("라이센스 활성화 중 오류가 발생했습니다.", "error");
+          console.error("Activation error:", error);
+          showAlert("오류가 발생했습니다. 다시 시도해주세요.", "error");
+        } finally {
           activateBtn.disabled = false;
           activateBtn.innerHTML = "라이센스 활성화";
         }
@@ -557,13 +479,6 @@
       cancelBtn.addEventListener("click", () => {
         window.close();
       });
-
-      // Pre-fill form
-      const urlParams = new URLSearchParams(window.location.search);
-      const emailParam = urlParams.get("email");
-      if (emailParam) {
-        emailInput.value = emailParam;
-      }
     </script>
   </body>
 </html>

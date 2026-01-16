@@ -1,5 +1,10 @@
 import { SELECTORS } from "@/modules/constants/selectors";
 
+/**
+ * 헤더 다음에 인사 배너 주입
+ * @param text - 표시할 텍스트
+ * @returns 주입 성공 여부
+ */
 export function injectHelloBannerAfterHeader(
   text: string = "안녕하세요"
 ): boolean {
@@ -22,6 +27,11 @@ export function injectHelloBannerAfterHeader(
   return true;
 }
 
+/**
+ * 헤더 다음에 상품 정보 주입
+ * @param info - 상품 정보
+ * @returns 주입 성공 여부
+ */
 export function injectProductInfoAfterHeader(info: {
   productId: string;
   brandName?: string;
@@ -79,6 +89,10 @@ export function injectProductInfoAfterHeader(info: {
   return true;
 }
 
+/**
+ * 로딩 중 상품 정보 주입
+ * @returns 주입 성공 여부
+ */
 export function injectLoadingProductInfo(): boolean {
   const root = document.querySelector(
     SELECTORS.PRODUCT_DETAIL_CONTAINER
@@ -110,6 +124,11 @@ export function injectLoadingProductInfo(): boolean {
   return true;
 }
 
+/**
+ * 실패 상품 정보 주입
+ * @param pid - 상품 ID
+ * @returns 주입 성공 여부
+ */
 export function injectFailProductInfo(pid: string): boolean {
   const root = document.querySelector(
     SELECTORS.PRODUCT_DETAIL_CONTAINER
@@ -138,6 +157,10 @@ export function injectFailProductInfo(pid: string): boolean {
   return true;
 }
 
+/**
+ * 빈 상품 정보 주입
+ * @returns 주입 성공 여부
+ */
 export function injectEmptyProductInfo(): boolean {
   const root = document.querySelector(
     SELECTORS.PRODUCT_DETAIL_CONTAINER
@@ -164,6 +187,10 @@ export function injectEmptyProductInfo(): boolean {
   return true;
 }
 
+/**
+ * 로그인 필요 상품 정보 주입
+ * @returns 주입 성공 여부
+ */
 export function injectLoginRequiredProductInfo(): boolean {
   const root = document.querySelector(
     SELECTORS.PRODUCT_DETAIL_CONTAINER
@@ -192,7 +219,6 @@ export function injectLoginRequiredProductInfo(): boolean {
   if (first) first.insertAdjacentElement("afterend", el);
   else root.prepend(el);
 
-  // Add click handler for login button
   const loginBtn = el.querySelector(".login-btn") as HTMLButtonElement | null;
   if (loginBtn) {
     loginBtn.onclick = () => {

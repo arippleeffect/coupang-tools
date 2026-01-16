@@ -1,5 +1,12 @@
 import { getCookieValue } from "@/modules/core/dom";
 
+/**
+ * 반출 아이템 목록 API 호출
+ * @param pageSize - 페이지 크기
+ * @param pageIndex - 페이지 인덱스
+ * @param token - XSRF 토큰
+ * @returns 응답 객체
+ */
 async function fetchItemList({
   pageSize,
   pageIndex,
@@ -26,6 +33,13 @@ async function fetchItemList({
   );
 }
 
+/**
+ * 반출 아이템 수집
+ * @param pageSize - 페이지 크기
+ * @param updateToast - 토스트 업데이트 함수
+ * @param finishToast - 토스트 완료 함수
+ * @returns 수집된 아이템 배열
+ */
 export async function collectItems(
   pageSize: number,
   updateToast: (count: number, currentSize: number, totalSize: number) => void,

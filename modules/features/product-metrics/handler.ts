@@ -16,6 +16,12 @@ import {
   showLoginToast,
 } from "@/modules/features/login/login-handler";
 
+/**
+ * 상품 지표 보기 핸들러
+ * @param store - 상품 스토어
+ * @param renderErrorToast - 에러 토스트 렌더링 함수
+ * @param ctx - 컨텍스트
+ */
 export async function handleViewProductMetrics(
   store: ProductStore,
   renderErrorToast: (ctx: any, message: string) => void,
@@ -73,7 +79,6 @@ export async function handleViewProductMetrics(
       });
     });
 
-    // Fetch individual products that failed
     const noDataStates = store
       .getState()
       .filter((item) => item.status === "FAIL" || item.status === undefined);
@@ -127,6 +132,13 @@ export async function handleViewProductMetrics(
   }
 }
 
+/**
+ * 재시도 핸들러 생성
+ * @param store - 상품 스토어
+ * @param renderErrorToast - 에러 토스트 렌더링 함수
+ * @param ctx - 컨텍스트
+ * @returns 재시도 이벤트 핸들러
+ */
 function createRetryHandler(
   store: ProductStore,
   renderErrorToast: (ctx: any, message: string) => void,

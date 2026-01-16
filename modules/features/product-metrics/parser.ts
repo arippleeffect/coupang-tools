@@ -1,6 +1,11 @@
 import { SELECTORS } from "@/modules/constants/selectors";
 import type { ProductState, ProductType } from "@/types";
 
+/**
+ * li 요소 목록을 ProductState 배열로 변환
+ * @param list - li 요소 컬렉션
+ * @returns 상품 상태 배열
+ */
 export function liElementsToProducts(
   list: HTMLCollectionOf<HTMLLIElement> | undefined
 ): ProductState[] {
@@ -53,13 +58,12 @@ export function liElementsToProducts(
 }
 
 /**
- * Get product list element from DOM
+ * DOM에서 상품 리스트 요소 조회
+ * @returns 상품 리스트 요소
  */
 export function getProductListElement(): HTMLElement {
-  // Try old structure first: #product-list
   let productListElement = document.getElementById("product-list");
 
-  // Try new Vue.js structure: ul.products-list
   if (!productListElement) {
     productListElement =
       document.querySelector<HTMLElement>("ul.products-list");
@@ -76,7 +80,8 @@ export function getProductListElement(): HTMLElement {
 }
 
 /**
- * Get search keyword from URL
+ * URL에서 검색 키워드 추출
+ * @returns 검색 키워드 또는 null
  */
 export function getSearchKeywordFromUrl(): string | null {
   const keyword = new URL(location.href).searchParams.get("q");

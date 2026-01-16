@@ -1,6 +1,10 @@
 import * as XLSX from "xlsx";
 import type { ProductState } from "@/types";
 
+/**
+ * 상품 데이터를 Excel 파일로 내보내기
+ * @param products - 상품 상태 배열
+ */
 export function exportProductsToExcel(products: ProductState[]) {
   const normalRows = products
     .filter((p) => p.status === "COMPLETE")
@@ -49,7 +53,8 @@ export function exportProductsToExcel(products: ProductState[]) {
 }
 
 /**
- * Export vendor return items to Excel
+ * 반출 아이템을 Excel 파일로 내보내기
+ * @param items - 아이템 배열
  */
 export function exportVendorReturnToExcel(items: any[]) {
   const rows: any[] = [];
@@ -139,6 +144,11 @@ export function exportVendorReturnToExcel(items: any[]) {
   downloadWorkbook(wb, "vendor-return");
 }
 
+/**
+ * Workbook 다운로드
+ * @param wb - Excel Workbook
+ * @param prefix - 파일명 접두사
+ */
 function downloadWorkbook(wb: XLSX.WorkBook, prefix: string) {
   const xlsxArray = XLSX.write(wb, { bookType: "xlsx", type: "array" });
   const blob = new Blob([xlsxArray], {

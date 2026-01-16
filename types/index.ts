@@ -110,33 +110,33 @@ export type CoupangProduct = {
   attributeTypes: string | null;
 };
 
-// License types
 export type LicenseStatus = "ACTIVE" | "INACTIVE" | "EXPIRED" | "INVALID";
 
 export type LicenseInfo = {
   email: string;
-  licenseKey: string;
+  activationToken: string;
   status: LicenseStatus;
   activatedAt?: string;
-  expiresAt?: string;
-  browserId?: string;
-};
-
-export type LicenseCheckResponse = {
-  ok: boolean;
-  license?: LicenseInfo;
-  message?: string;
 };
 
 export type LicenseActivateRequest = {
   email: string;
   licenseKey: string;
-  browserId: string;
 };
 
 export type LicenseActivateResponse = {
   ok: boolean;
   license?: LicenseInfo;
+  message?: string;
+  error?: string;
+};
+
+export type LicenseDeactivateRequest = {
+  activationToken: string;
+};
+
+export type LicenseDeactivateResponse = {
+  ok: boolean;
   message?: string;
   error?: string;
 };

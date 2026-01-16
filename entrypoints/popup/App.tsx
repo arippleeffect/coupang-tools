@@ -36,15 +36,6 @@ function App() {
     window.close();
   }
 
-  function formatDate(dateString: string) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("ko-KR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  }
-
   async function handleRemoveLicense() {
     if (
       !confirm(
@@ -68,8 +59,23 @@ function App() {
     return (
       <div className="app">
         <div className="header">
-          <h1>쿠팡 스탯 체크</h1>
-          <p>상품 분석 및 지표 확인</p>
+          <div className="header-icon">
+            <svg
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+          </div>
+          <h1>쿠팡 지표 분석</h1>
+          <p>상품 데이터 및 판매 지표</p>
         </div>
         <div className="loading">
           <div className="spinner"></div>
@@ -83,12 +89,40 @@ function App() {
     return (
       <div className="app">
         <div className="header">
-          <h1>쿠팡 스탯 체크</h1>
-          <p>상품 분석 및 지표 확인</p>
+          <div className="header-icon">
+            <svg
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+          </div>
+          <h1>쿠팡 지표 분석</h1>
+          <p>상품 데이터 및 판매 지표</p>
         </div>
         <div className="content">
           <div className="no-license">
-            <div className="no-license-icon">🔐</div>
+            <div className="no-license-icon">
+              <svg
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
             <h2>라이센스 활성화 필요</h2>
             <p>
               이 도구를 사용하려면 라이센스 활성화가 필요합니다.
@@ -100,7 +134,7 @@ function App() {
             </button>
           </div>
         </div>
-        <div className="footer">v1.0 © 2026 쿠팡 스탯 체크</div>
+        <div className="footer">v1.0 © 2026 쿠팡 지표 분석</div>
       </div>
     );
   }
@@ -108,6 +142,11 @@ function App() {
   return (
     <div className="app">
       <div className="header">
+        <div className="header-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
         <h1>쿠팡 스탯 체크</h1>
         <p>상품 분석 및 지표 확인</p>
       </div>
@@ -129,12 +168,6 @@ function App() {
           <div className="info-row">
             <span className="info-label">이메일</span>
             <span className="info-value">{license?.email || "-"}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">만료일</span>
-            <span className="info-value">
-              {license?.expiresAt ? formatDate(license.expiresAt) : "무제한"}
-            </span>
           </div>
         </div>
         <button className="btn btn-secondary" onClick={openLicensePage}>

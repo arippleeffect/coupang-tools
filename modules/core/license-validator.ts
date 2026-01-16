@@ -1,37 +1,32 @@
-/**
- * License validation service
- * Periodically validates license with backend API
- */
-
 import { getLicense, removeLicense } from "./license-storage";
-import { getBrowserId } from "./browser-id";
 import type { LicenseInfo } from "@/types";
 
-// Validation interval: 1 hour (reasonable for license checks)
-const VALIDATION_INTERVAL = 60 * 60 * 1000; // 1 hour
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
-// For development/testing: shorter interval
-// const VALIDATION_INTERVAL = 2 * 60 * 1000; // 2 minutes
-
-// Cache validation result for 5 minutes to avoid excessive API calls
-const VALIDATION_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const VALIDATION_INTERVAL = 60 * 60 * 1000;
+const VALIDATION_CACHE_DURATION = 5 * 60 * 1000;
 let lastValidationTime = 0;
 let lastValidationResult = false;
 
-// Validation on important actions (with caching)
+/**
+ * 사용자 액션 시 라이센스 유효성 검증 (캐시 사용)
+ * @returns 라이센스 유효 여부
+ */
 export async function validateLicenseOnAction(): Promise<boolean> {
   const now = Date.now();
 
-  // Use cached result if validation was done recently (within 5 minutes)
   if (now - lastValidationTime < VALIDATION_CACHE_DURATION) {
-    console.log("[License Validator] Using cached validation result:", lastValidationResult);
+    console.log(
+      "[License Validator] Using cached validation result:",
+      lastValidationResult
+    );
     return lastValidationResult;
   }
 
   console.log("[License Validator] Validating license on action");
   const result = await validateLicense();
 
-  // Update cache
   lastValidationTime = now;
   lastValidationResult = result;
 
@@ -39,8 +34,8 @@ export async function validateLicenseOnAction(): Promise<boolean> {
 }
 
 /**
- * Invalidate validation cache
- * Call this when license is activated/deactivated to force revalidation
+ * 검증 캐시 무효화
+ * 라이센스 활성화/비활성화 시 호출하여 즉시 재검증 유도
  */
 export function invalidateValidationCache(): void {
   console.log("[License Validator] Cache invalidated");
@@ -49,18 +44,18 @@ export function invalidateValidationCache(): void {
 }
 
 /**
- * Start periodic license validation
+ * 주기적 라이센스 검증 시작 (1시간 간격)
  */
 export function startPeriodicValidation(): void {
-  console.log("[License Validator] Starting periodic validation (interval: 1 hour)");
+  console.log(
+    "[License Validator] Starting periodic validation (interval: 1 hour)"
+  );
 
-  // Validate immediately on start
   validateLicense().then((result) => {
     lastValidationTime = Date.now();
     lastValidationResult = result;
   });
 
-  // Then validate periodically
   setInterval(() => {
     validateLicense().then((result) => {
       lastValidationTime = Date.now();
@@ -70,8 +65,8 @@ export function startPeriodicValidation(): void {
 }
 
 /**
- * Validate license with backend API
- * Returns true if license is valid, false otherwise
+ * 백엔드 API를 통한 라이센스 검증
+ * @returns 라이센스 유효 여부
  */
 async function validateLicense(): Promise<boolean> {
   try {
@@ -82,25 +77,11 @@ async function validateLicense(): Promise<boolean> {
       return false;
     }
 
-    const browserId = await getBrowserId();
-
     console.log("[License Validator] Validating license", {
       email: license.email,
-      browserId,
-      storedBrowserId: license.browserId,
     });
 
-    // Check if browser ID matches
-    if (license.browserId && license.browserId !== browserId) {
-      console.warn(
-        "[License Validator] Browser ID mismatch - license deactivated on this browser"
-      );
-      await removeLicense();
-      return false;
-    }
-
-    // Call backend API to validate license
-    const isValid = await callValidationAPI(license, browserId);
+    const isValid = await callValidationAPI(license);
 
     if (!isValid) {
       console.warn("[License Validator] License validation failed");
@@ -117,54 +98,36 @@ async function validateLicense(): Promise<boolean> {
 }
 
 /**
- * Call backend API to validate license
- * In production, this would be a real API call
+ * 라이센스 검증 API 호출
+ * @param license - 검증할 라이센스 정보
+ * @returns API 검증 결과
  */
-async function callValidationAPI(
-  license: LicenseInfo,
-  browserId: string
-): Promise<boolean> {
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 300));
+async function callValidationAPI(license: LicenseInfo): Promise<boolean> {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/license-check`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        activationToken: license.activationToken,
+      }),
+    });
 
-  // Mock validation logic
-  // In production, this would call a real backend API
-  const MOCK_VALID_LICENSES = [
-    {
-      email: "test@example.com",
-      licenseKey: "TEST-1234-5678-ABCD",
-    },
-    {
-      email: "demo@example.com",
-      licenseKey: "DEMO-ABCD-1234-EFGH",
-    },
-  ];
-
-  const isValidLicense = MOCK_VALID_LICENSES.some(
-    (validLicense) =>
-      validLicense.email === license.email &&
-      validLicense.licenseKey === license.licenseKey
-  );
-
-  if (!isValidLicense) {
-    return false;
-  }
-
-  // Check expiration
-  if (license.expiresAt) {
-    const expiresAt = new Date(license.expiresAt);
-    if (expiresAt < new Date()) {
-      console.log("[License Validator] License expired");
+    if (!response.ok) {
+      console.error(
+        "[License Validator] Validation API request failed:",
+        response.status
+      );
       return false;
     }
-  }
 
-  // Check browser ID (simulate backend check)
-  // In production, backend would check if this browserId is the active one for this license
-  if (license.browserId && license.browserId !== browserId) {
-    console.log("[License Validator] Browser ID mismatch on backend");
+    const data: { valid: boolean } = await response.json();
+    return data.valid || false;
+  } catch (error) {
+    console.error("[License Validator] Validation API error:", error);
     return false;
   }
-
-  return true;
 }

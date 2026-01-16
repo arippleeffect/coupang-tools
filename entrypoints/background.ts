@@ -5,13 +5,10 @@ import {
   MESSAGE_TYPE,
   MessageResponse,
   PreMatchingSearchResponse,
-  LicenseCheckResponse,
-  LicenseActivateRequest,
   LicenseActivateResponse,
 } from "@/types";
 import { isLicenseValid, getLicense } from "@/modules/core/license-storage";
 import { activateLicense, deactivateLicense } from "@/modules/api/license";
-import { getBrowserId } from "@/modules/core/browser-id";
 import {
   startPeriodicValidation,
   validateLicenseOnAction,
@@ -24,7 +21,7 @@ export default defineBackground(() => {
 
   // Handle extension icon click - always open license page
   browser.action.onClicked.addListener(async () => {
-    const licensePageUrl = browser.runtime.getURL("license.html");
+    const licensePageUrl = browser.runtime.getURL("/license.html");
     await browser.tabs.create({ url: licensePageUrl });
   });
 
@@ -80,12 +77,13 @@ export default defineBackground(() => {
 
     // Handle activation menu click
     if (info.menuItemId === "activate_license") {
-      const licensePageUrl = browser.runtime.getURL("license.html");
+      const licensePageUrl = browser.runtime.getURL("/license.html");
       await browser.tabs.create({ url: licensePageUrl });
       return;
     }
 
     if (info.menuItemId === MESSAGE_TYPE.VIEW_PRODUCT_METRICS) {
+      console.log("지표 보기");
       // Validate license before processing
       const isValid = await validateLicenseOnAction();
       if (!isValid) {
@@ -108,8 +106,10 @@ export default defineBackground(() => {
         const message = {
           type: MESSAGE_TYPE.VIEW_PRODUCT_METRICS,
           tab: tab.id,
-          token: sessionCookie ?? token,
+          token: sessionCookie ? token : null,
         };
+
+        console.log("message::", message);
 
         await browser.tabs.sendMessage(tab.id, message);
       } catch (err: any) {
@@ -167,7 +167,6 @@ export default defineBackground(() => {
       sendResponse: (
         response:
           | MessageResponse<PreMatchingSearchResponse>
-          | LicenseCheckResponse
           | LicenseActivateResponse
       ) => void
     ) => {
@@ -193,11 +192,9 @@ export default defineBackground(() => {
             email: string;
             licenseKey: string;
           };
-          const browserId = await getBrowserId();
           const response = await activateLicense({
             email,
             licenseKey,
-            browserId,
           });
 
           // Invalidate cache after activation
@@ -211,10 +208,9 @@ export default defineBackground(() => {
         if (msg.type === MESSAGE_TYPE.LICENSE_DEACTIVATE) {
           const license = await getLicense();
           if (license) {
-            const response = await deactivateLicense(
-              license.email,
-              license.licenseKey
-            );
+            const response = await deactivateLicense({
+              activationToken: license.activationToken,
+            });
 
             // Invalidate cache after deactivation
             if (response.ok) {

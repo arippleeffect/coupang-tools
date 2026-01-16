@@ -6,10 +6,20 @@ export interface ApiResponse<T = any> {
   data?: T;
 }
 
+/**
+ * 백그라운드로 메시지 전송
+ * @param message - 전송할 메시지
+ * @returns API 응답
+ */
 async function sendMessage<T = any>(message: any): Promise<ApiResponse<T>> {
   return browser.runtime.sendMessage(message);
 }
 
+/**
+ * 키워드로 상품 목록 조회
+ * @param keyword - 검색 키워드
+ * @returns 상품 목록
+ */
 export async function fetchProducts(
   keyword: string
 ): Promise<CoupangProduct[]> {
@@ -25,6 +35,11 @@ export async function fetchProducts(
   return (response.data?.result as CoupangProduct[]) || [];
 }
 
+/**
+ * 단일 상품 정보 조회
+ * @param productId - 상품 ID
+ * @returns 상품 정보
+ */
 export async function fetchSingleProduct(
   productId: string
 ): Promise<CoupangProduct> {
@@ -51,6 +66,12 @@ export async function fetchSingleProduct(
   return matched;
 }
 
+/**
+ * 전환율 계산
+ * @param pv - 페이지뷰
+ * @param sales - 판매량
+ * @returns 전환율 (백분율)
+ */
 export function calculateRate(pv?: number, sales?: number): string {
   if (pv && pv > 0 && sales !== undefined && isFinite(sales)) {
     return ((sales / pv) * 100).toFixed(2) + "%";
@@ -58,6 +79,12 @@ export function calculateRate(pv?: number, sales?: number): string {
   return "-";
 }
 
+/**
+ * 총 매출액 계산
+ * @param sales - 판매량
+ * @param price - 가격
+ * @returns 총 매출액
+ */
 export function calculateTotalSales(
   sales?: number,
   price?: number

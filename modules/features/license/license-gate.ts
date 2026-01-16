@@ -1,15 +1,14 @@
 import { isLicenseValid } from "@/modules/core/license-storage";
 
 /**
- * Check if license is valid and redirect to activation page if not
- * @returns true if license is valid, false otherwise
+ * 라이센스 유효성 확인 및 활성화 페이지로 리디렉션
+ * @returns 라이센스 유효 여부
  */
 export async function checkLicenseAndRedirect(): Promise<boolean> {
   const isValid = await isLicenseValid();
 
   if (!isValid) {
-    // Open license activation page
-    const licensePageUrl = browser.runtime.getURL("license.html");
+    const licensePageUrl = browser.runtime.getURL("/license.html");
     window.open(licensePageUrl, "_blank", "width=600,height=700");
     return false;
   }
@@ -18,10 +17,9 @@ export async function checkLicenseAndRedirect(): Promise<boolean> {
 }
 
 /**
- * Show license required UI overlay on the page
+ * 라이센스 필요 UI 오버레이 표시
  */
 export function showLicenseRequiredOverlay(): void {
-  // Check if overlay already exists
   if (document.getElementById("ct-license-overlay")) {
     return;
   }
@@ -106,13 +104,12 @@ export function showLicenseRequiredOverlay(): void {
 
   document.body.appendChild(overlay);
 
-  // Add event listeners
   const activateBtn = document.getElementById("ct-activate-license-btn");
   const closeBtn = document.getElementById("ct-close-overlay-btn");
 
   if (activateBtn) {
     activateBtn.addEventListener("click", () => {
-      const licensePageUrl = browser.runtime.getURL("license.html");
+      const licensePageUrl = browser.runtime.getURL("/license.html");
       window.open(licensePageUrl, "_blank", "width=600,height=700");
     });
   }
@@ -123,7 +120,6 @@ export function showLicenseRequiredOverlay(): void {
     });
   }
 
-  // Close overlay when clicking outside
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) {
       overlay.remove();
@@ -132,7 +128,7 @@ export function showLicenseRequiredOverlay(): void {
 }
 
 /**
- * Remove license required overlay
+ * 라이센스 필요 오버레이 제거
  */
 export function removeLicenseRequiredOverlay(): void {
   const overlay = document.getElementById("ct-license-overlay");
