@@ -15,7 +15,7 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
  * @returns 활성화 결과 및 라이센스 정보
  */
 export async function activateLicense(
-  request: LicenseActivateRequest
+  request: LicenseActivateRequest,
 ): Promise<LicenseActivateResponse> {
   const { email, licenseKey } = request;
 
@@ -29,18 +29,21 @@ export async function activateLicense(
   }
 
   try {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/smooth-task`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        apikey: SUPABASE_KEY,
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/licenses-register`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          apikey: SUPABASE_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          licenseKey,
+        }),
       },
-      body: JSON.stringify({
-        email,
-        licenseKey,
-      }),
-    });
+    );
 
     if (!response.ok) {
       let errorMessage = "라이센스 활성화 요청 실패";
@@ -65,7 +68,7 @@ export async function activateLicense(
       } catch (parseError) {
         console.error(
           "[License API] Failed to parse error response:",
-          parseError
+          parseError,
         );
       }
 
@@ -116,7 +119,7 @@ export async function activateLicense(
  * @returns 비활성화 결과
  */
 export async function deactivateLicense(
-  request: LicenseDeactivateRequest
+  request: LicenseDeactivateRequest,
 ): Promise<LicenseDeactivateResponse> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   return {

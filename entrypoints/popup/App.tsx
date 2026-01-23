@@ -39,7 +39,7 @@ function App() {
   async function handleRemoveLicense() {
     if (
       !confirm(
-        "라이센스를 삭제하시겠습니까?\n\n삭제 후 다시 활성화하려면 라이센스 키를 재입력해야 합니다."
+        "라이센스를 삭제하시겠습니까?\n\n삭제 후 다시 활성화하려면 라이센스 키를 재입력해야 합니다.",
       )
     ) {
       return;
@@ -147,7 +147,7 @@ function App() {
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
           </svg>
         </div>
-        <h1>쿠팡 스탯 체크</h1>
+        <h1>쿠팡 지표 분석</h1>
         <p>상품 분석 및 지표 확인</p>
       </div>
       <div className="content">
@@ -177,7 +177,7 @@ function App() {
           라이센스 삭제
         </button>
       </div>
-      <div className="footer">v1.0 © 2026 쿠팡 스탯 체크</div>
+      <div className="footer">v1.0 © 2026 쿠팡 지표 분석</div>
     </div>
   );
 }

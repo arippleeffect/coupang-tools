@@ -132,8 +132,8 @@ export default defineBackground(() => {
       sendResponse: (
         response:
           | MessageResponse<PreMatchingSearchResponse>
-          | LicenseActivateResponse
-      ) => void
+          | LicenseActivateResponse,
+      ) => void,
     ) => {
       (async () => {
         if (msg.type === MESSAGE_TYPE.GET_PRODUCT) {
@@ -190,7 +190,7 @@ export default defineBackground(() => {
       })();
 
       return true;
-    }
+    },
   );
 
   browser.webNavigation.onHistoryStateUpdated.addListener((details) => {
@@ -299,7 +299,7 @@ async function fetchPreMatchingSearch<T>({
         searchOrder: "DEFAULT",
         sortType: "DEFAULT",
       }),
-    }
+    },
   );
 
   if (!res.ok) {
@@ -317,7 +317,7 @@ async function fetchPreMatchingSearch<T>({
         message: `[${res.status}] 상품 검색 요청 실패:${message} \n\n 잠시후 다시 시도해주세요`,
         error: bodyText,
       },
-      "PRE_MATCHING_SEARCH_FAILED"
+      "PRE_MATCHING_SEARCH_FAILED",
     );
   }
 
