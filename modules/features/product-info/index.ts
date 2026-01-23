@@ -16,7 +16,7 @@ import { ensureHelloStyle } from "./styles";
 import { SELECTORS } from "@/modules/constants/selectors";
 import { isLoginRequiredError } from "@/modules/features/login/login-handler";
 import { showErrorToast } from "./toast-error";
-import { isLicenseValid } from "@/modules/core/license-storage";
+import { validateLicenseOnAction } from "@/modules/core/license-validator";
 
 async function injectLicenseRequiredBanner() {
   const root = document.querySelector(SELECTORS.PRODUCT_DETAIL_CONTAINER);
@@ -59,7 +59,9 @@ async function injectLicenseRequiredBanner() {
     </button>
   `;
 
-  const btn = banner.querySelector(".license-activate-btn") as HTMLButtonElement;
+  const btn = banner.querySelector(
+    ".license-activate-btn",
+  ) as HTMLButtonElement;
   btn.onmouseover = () => {
     btn.style.background = "#2563eb";
   };
@@ -97,8 +99,6 @@ export async function fetchAndInjectProductInfo(pid: string) {
       totalSales: totalSalesValue,
     });
   } catch (e: any) {
-    console.log("에러", e);
-
     if (isLoginRequiredError(e)) {
       injectLoginRequiredProductInfo();
       return;
@@ -112,7 +112,7 @@ export async function fetchAndInjectProductInfo(pid: string) {
     injectFailProductInfo(pid);
     setupRetryHandler(pid);
     showErrorToast(
-      e.message || e.error || "상품 정보를 불러오는 중 오류가 발생했습니다"
+      e.message || e.error || "상품 정보를 불러오는 중 오류가 발생했습니다",
     );
   }
 }
@@ -131,10 +131,9 @@ export function setupLazyProductInfo() {
 
     ensureHelloStyle();
 
-    // Check license FIRST to avoid flickering
-    const hasLicense = await isLicenseValid();
+    // Check license FIRST to avoid flickering (with 6-hour cache)
+    const hasLicense = await validateLicenseOnAction();
     if (!hasLicense) {
-      console.log("[Product Info] No valid license, showing activation banner");
       await injectLicenseRequiredBanner();
       return;
     }
@@ -150,7 +149,7 @@ export function setupLazyProductInfo() {
       const banner = root.querySelector(SELECTORS.CT_PRODINFO);
       const curPid = getPidFromLocation();
       if (!banner && curPid) {
-        const hasLicense = await isLicenseValid();
+        const hasLicense = await validateLicenseOnAction();
         if (!hasLicense) {
           await injectLicenseRequiredBanner();
           return;
@@ -167,7 +166,7 @@ export function setupLazyProductInfo() {
       setTimeout(async () => {
         const npid = getPidFromLocation();
         if (npid) {
-          const hasLicense = await isLicenseValid();
+          const hasLicense = await validateLicenseOnAction();
           if (!hasLicense) {
             await injectLicenseRequiredBanner();
             return;
@@ -196,7 +195,7 @@ export function setupLazyProductInfo() {
           ? (window as any).requestIdleCallback(exec, { timeout: 1200 })
           : setTimeout(exec, 0);
       },
-      { once: true }
+      { once: true },
     );
   }
 }

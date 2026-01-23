@@ -30,7 +30,7 @@ export async function activateLicense(
 
   try {
     const response = await fetch(
-      `${SUPABASE_URL}/functions/v1/licenses-register`,
+      `${SUPABASE_URL}/functions/v1/activate-license`,
       {
         method: "POST",
         headers: {

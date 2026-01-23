@@ -25,7 +25,7 @@ import {
 export async function handleViewProductMetrics(
   store: ProductStore,
   renderErrorToast: (ctx: any, message: string) => void,
-  ctx: any
+  ctx: any,
 ) {
   try {
     initMetricsStyle();
@@ -39,7 +39,7 @@ export async function handleViewProductMetrics(
     products.forEach((product) => {
       renderProductBox(
         product,
-        createRetryHandler(store, renderErrorToast, ctx)
+        createRetryHandler(store, renderErrorToast, ctx),
       );
     });
 
@@ -55,7 +55,7 @@ export async function handleViewProductMetrics(
 
     products.forEach((product) => {
       const matched = result.find(
-        (r) => String(r.productId) === String(product.productId)
+        (r) => String(r.productId) === String(product.productId),
       );
 
       if (!matched) {
@@ -72,7 +72,7 @@ export async function handleViewProductMetrics(
           sales: matched.salesLast28d,
           totalSales: calculateTotalSales(
             matched.salesLast28d,
-            matched.salePrice
+            matched.salePrice,
           ),
           rate: calculateRate(matched.pvLast28Day, matched.salesLast28d),
         },
@@ -98,7 +98,7 @@ export async function handleViewProductMetrics(
             sales: response.salesLast28d,
             totalSales: calculateTotalSales(
               response.salesLast28d,
-              response.salePrice
+              response.salePrice,
             ),
             rate: calculateRate(response.pvLast28Day, response.salesLast28d),
           },
@@ -122,12 +122,10 @@ export async function handleViewProductMetrics(
     document.querySelectorAll(".ct-metrics").forEach((el) => el.remove());
 
     if (isLoginRequiredError(error)) {
-      console.log("[handleViewProductMetrics] Login required, showing toast");
       showLoginToast();
       return;
     }
 
-    console.log("[handleViewProductMetrics] Showing error toast");
     renderErrorToast(ctx, error.message ?? error.error);
   }
 }
@@ -142,7 +140,7 @@ export async function handleViewProductMetrics(
 function createRetryHandler(
   store: ProductStore,
   renderErrorToast: (ctx: any, message: string) => void,
-  ctx: any
+  ctx: any,
 ) {
   return async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     const dataId = event.currentTarget.getAttribute("data-dataid");
@@ -165,11 +163,11 @@ function createRetryHandler(
           sales: retryResponse.salesLast28d,
           totalSales: calculateTotalSales(
             retryResponse.salesLast28d,
-            retryResponse.salePrice
+            retryResponse.salePrice,
           ),
           rate: calculateRate(
             retryResponse.pvLast28Day,
-            retryResponse.salesLast28d
+            retryResponse.salesLast28d,
           ),
         },
       });

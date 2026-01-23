@@ -10,15 +10,11 @@ import {
 import { isLicenseValid, getLicense } from "@/modules/core/license-storage";
 import { activateLicense, deactivateLicense } from "@/modules/api/license";
 import {
-  startPeriodicValidation,
   validateLicenseOnAction,
   invalidateValidationCache,
 } from "@/modules/core/license-validator";
 
 export default defineBackground(() => {
-  // Start periodic license validation
-  startPeriodicValidation();
-
   // Handle extension icon click - always open license page
   browser.action.onClicked.addListener(async () => {
     const licensePageUrl = browser.runtime.getURL("/license.html");
@@ -31,7 +27,6 @@ export default defineBackground(() => {
   // Re-initialize context menus when license status changes
   browser.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === "local" && changes.ct_license) {
-      console.log("[bg] License storage changed, re-initializing menus");
       // Just update menus, validation will happen periodically or on action
       await initializeContextMenus();
     }
@@ -75,7 +70,6 @@ export default defineBackground(() => {
     }
 
     if (info.menuItemId === MESSAGE_TYPE.VIEW_PRODUCT_METRICS) {
-      console.log("지표 보기");
       // Validate license before processing
       const isValid = await validateLicenseOnAction();
       if (!isValid) {
@@ -100,8 +94,6 @@ export default defineBackground(() => {
           tab: tab.id,
           token: sessionCookie ? token : null,
         };
-
-        console.log("message::", message);
 
         await browser.tabs.sendMessage(tab.id, message);
       } catch (err: any) {

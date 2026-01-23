@@ -21,7 +21,7 @@ export function showLoginToast() {
           hideLoginToast();
         }}
       />
-    </ErrorBoundary>
+    </ErrorBoundary>,
   );
 
   setTimeout(() => {
@@ -46,18 +46,10 @@ export function isLoginRequiredError(error: any): boolean {
   const errorMessage = error.message || error.error || "";
   const errorCode = error.code || "";
 
-  console.log("[isLoginRequiredError] Checking error:", {
-    error,
-    errorCode,
-    errorMessage,
-  });
-
   const result =
     errorCode === "NO_XSRF_TOKEN" ||
     errorMessage.includes("쿠팡윙로그인") ||
     errorMessage.includes("로그인");
-
-  console.log("[isLoginRequiredError] Result:", result);
 
   return result;
 }

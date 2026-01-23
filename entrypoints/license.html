@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
@@ -12,7 +12,8 @@
       }
 
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           "Helvetica Neue", Arial, "Noto Sans KR", sans-serif;
         background: hsl(0 0% 98%);
         min-height: 100vh;
@@ -311,7 +312,15 @@
     <div class="container">
       <div class="header">
         <div class="logo">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            stroke="white"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <line x1="18" y1="20" x2="18" y2="10"></line>
             <line x1="12" y1="20" x2="12" y2="4"></line>
             <line x1="6" y1="20" x2="6" y2="14"></line>
@@ -370,7 +379,9 @@
         <div class="warning-box">
           <h3>중요 안내</h3>
           <ul>
-            <li><strong>양도 및 공유 금지:</strong> 지급받은 본인만 사용 가능</li>
+            <li>
+              <strong>양도 및 공유 금지:</strong> 지급받은 본인만 사용 가능
+            </li>
             <li>
               <strong>단일 브라우저 제한:</strong> 하나의 라이센스는 하나의
               브라우저에서만 사용 가능
@@ -389,7 +400,6 @@
 
     <script type="module">
       async function activateLicense(email, licenseKey) {
-        console.log("[License Page] Sending activation request to background");
         return new Promise((resolve) => {
           chrome.runtime.sendMessage(
             {
@@ -398,9 +408,8 @@
               licenseKey,
             },
             (response) => {
-              console.log("[License Page] Received response:", response);
               resolve(response);
-            }
+            },
           );
         });
       }
@@ -451,7 +460,7 @@
 
             showAlert(
               response.message || "라이센스가 성공적으로 활성화되었습니다.",
-              "success"
+              "success",
             );
 
             emailInput.value = "";
@@ -464,7 +473,7 @@
             showAlert(
               response.message ||
                 "라이센스 활성화에 실패했습니다. 다시 시도해주세요.",
-              "error"
+              "error",
             );
           }
         } catch (error) {

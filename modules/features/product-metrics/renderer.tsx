@@ -9,17 +9,17 @@ const rootMap = new WeakMap<HTMLElement, ReactDOM.Root>();
 export function renderProductBox(
   pState: ProductState,
   onRetry: (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => Promise<void>
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => Promise<void>,
 ) {
   const elements = document.querySelectorAll<HTMLElement>(
-    `[data-id="${pState.dataId}"]`
+    `[data-id="${pState.dataId}"]`,
   );
 
   const elementList = Array.from(elements);
 
   const missingMetricBoxes = elementList.filter(
-    (el) => !el.querySelector<HTMLElement>(SELECTORS.CT_METRICS)
+    (el) => !el.querySelector<HTMLElement>(SELECTORS.CT_METRICS),
   );
 
   missingMetricBoxes.forEach((el) => {
@@ -67,7 +67,6 @@ export function renderProductBox(
     }
 
     const renderContent = () => {
-      console.log("pState", pState.status);
       switch (pState.status) {
         case "LOADING":
           return <Loading />;
