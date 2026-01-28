@@ -6,13 +6,96 @@ import {
   MessageResponse,
   PreMatchingSearchResponse,
   LicenseActivateResponse,
+  LicenseInfo,
 } from "@/types";
-import { isLicenseValid, getLicense } from "@/modules/core/license-storage";
-import { activateLicense, deactivateLicense } from "@/modules/api/license";
 import {
-  validateLicenseOnAction,
-  invalidateValidationCache,
-} from "@/modules/core/license-validator";
+  isLicenseValid,
+  getLicense,
+  removeLicense,
+} from "@/modules/core/license-storage";
+import { activateLicense, deactivateLicense } from "@/modules/api/license";
+
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const VALIDATION_CACHE_DURATION = 6 * 60 * 60 * 1000; // 6시간
+
+// Background에서 메모리 캐시 관리 (content script에서 조작 불가)
+let lastValidationTime = 0;
+let lastValidationResult = false;
+
+/**
+ * 라이선스 검증 API 호출
+ */
+async function callValidationAPI(license: LicenseInfo): Promise<boolean> {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/license-check`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        activationToken: license.activationToken,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("[License Validator] API request failed:", response.status);
+      return false;
+    }
+
+    const data: { valid: boolean } = await response.json();
+    return data.valid || false;
+  } catch (error) {
+    console.error("[License Validator] API error:", error);
+    return false;
+  }
+}
+
+/**
+ * 라이선스 검증 (캐시 사용)
+ */
+async function validateLicenseOnAction(): Promise<boolean> {
+  const now = Date.now();
+
+  if (now - lastValidationTime < VALIDATION_CACHE_DURATION) {
+    return lastValidationResult;
+  }
+
+  try {
+    const license = await getLicense();
+
+    if (!license) {
+      lastValidationTime = now;
+      lastValidationResult = false;
+      return false;
+    }
+
+    const isValid = await callValidationAPI(license);
+
+    if (!isValid) {
+      console.warn("[License Validator] Validation failed, removing license");
+      await removeLicense();
+    }
+
+    lastValidationTime = now;
+    lastValidationResult = isValid;
+
+    return isValid;
+  } catch (error) {
+    console.error("[License Validator] Error:", error);
+    return false;
+  }
+}
+
+/**
+ * 캐시 무효화
+ */
+function invalidateValidationCache(): void {
+  lastValidationTime = 0;
+  lastValidationResult = false;
+}
 
 export default defineBackground(() => {
   // Handle extension icon click - always open license page
@@ -119,7 +202,8 @@ export default defineBackground(() => {
             email: string;
             licenseKey: string;
           }
-        | { type: MESSAGE_TYPE.LICENSE_DEACTIVATE },
+        | { type: MESSAGE_TYPE.LICENSE_DEACTIVATE }
+        | { type: MESSAGE_TYPE.LICENSE_VALIDATE },
       sender,
       sendResponse: (
         response:
@@ -178,6 +262,11 @@ export default defineBackground(() => {
           } else {
             sendResponse({ ok: false, message: "라이선스가 없습니다." });
           }
+        }
+
+        if (msg.type === MESSAGE_TYPE.LICENSE_VALIDATE) {
+          const isValid = await validateLicenseOnAction();
+          sendResponse({ ok: isValid });
         }
       })();
 

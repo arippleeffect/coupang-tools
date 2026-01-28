@@ -90,6 +90,41 @@ export function injectProductInfoAfterHeader(info: {
 }
 
 /**
+ * 라이선스 확인 중 로딩 주입
+ * @returns 주입 성공 여부
+ */
+export function injectLicenseCheckingInfo(): boolean {
+  const root = document.querySelector(
+    SELECTORS.PRODUCT_DETAIL_CONTAINER,
+  ) as HTMLElement | null;
+  if (!root) return false;
+
+  const prev = root.querySelector(SELECTORS.CT_PRODINFO);
+  if (prev) prev.remove();
+
+  const el = document.createElement("div");
+  el.className = "ct-prodinfo compact";
+  el.innerHTML = `
+    <div class="wrap">
+      <div class="line" style="justify-content:center;">
+        <span class="kv"><span class="label">라이선스 확인 중...</span>
+        <span class="value" style="margin-left:6px;">
+          <span class="chip pv" style="display:inline-flex;align-items:center;">
+            <span class="spinner" style="width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:ctspin .8s linear infinite;display:inline-block;margin-right:5px;"></span>
+            확인중
+          </span>
+        </span>
+        </span>
+      </div>
+    </div>`;
+
+  const first = root.firstElementChild as HTMLElement | null;
+  if (first) first.insertAdjacentElement("afterend", el);
+  else root.prepend(el);
+  return true;
+}
+
+/**
  * 로딩 중 상품 정보 주입
  * @returns 주입 성공 여부
  */

@@ -8,6 +8,7 @@ import { formatCurrencyKRW } from "@/modules/ui/metrics";
 import {
   injectProductInfoAfterHeader,
   injectLoadingProductInfo,
+  injectLicenseCheckingInfo,
   injectFailProductInfo,
   injectEmptyProductInfo,
   injectLoginRequiredProductInfo,
@@ -131,14 +132,17 @@ export function setupLazyProductInfo() {
 
     ensureHelloStyle();
 
-    // Check license FIRST to avoid flickering (with 6-hour cache)
+    // Show license checking loading first
+    injectLicenseCheckingInfo();
+
+    // Check license (with 6-hour cache in background)
     const hasLicense = await validateLicenseOnAction();
     if (!hasLicense) {
       await injectLicenseRequiredBanner();
       return;
     }
 
-    // Only show loading if license is valid
+    // License valid - show product loading
     injectLoadingProductInfo();
     fetchAndInjectProductInfo(pid);
 
@@ -149,6 +153,7 @@ export function setupLazyProductInfo() {
       const banner = root.querySelector(SELECTORS.CT_PRODINFO);
       const curPid = getPidFromLocation();
       if (!banner && curPid) {
+        injectLicenseCheckingInfo();
         const hasLicense = await validateLicenseOnAction();
         if (!hasLicense) {
           await injectLicenseRequiredBanner();
@@ -166,6 +171,7 @@ export function setupLazyProductInfo() {
       setTimeout(async () => {
         const npid = getPidFromLocation();
         if (npid) {
+          injectLicenseCheckingInfo();
           const hasLicense = await validateLicenseOnAction();
           if (!hasLicense) {
             await injectLicenseRequiredBanner();
