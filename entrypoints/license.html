@@ -328,7 +328,9 @@
       .dialog {
         background: white;
         border-radius: 12px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04);
         max-width: 360px;
         width: 90%;
         padding: 32px;
@@ -368,8 +370,14 @@
         line-height: 1.5;
       }
 
+      .dialog .dialog-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+      }
+
       .dialog .btn-coupang {
-        width: 100%;
+        flex: 1;
         padding: 12px 16px;
         font-size: 15px;
         font-weight: 600;
@@ -378,7 +386,9 @@
         cursor: pointer;
         background: hsl(221.2 83.2% 53.3%);
         color: white;
-        transition: all 0.15s ease;
+        transition:
+          background 0.15s ease,
+          transform 0.1s ease;
         font-family: inherit;
       }
 
@@ -387,7 +397,31 @@
       }
 
       .dialog .btn-coupang:active {
-        background: hsl(221.2 83.2% 43%);
+        transform: scale(0.98);
+      }
+
+      .dialog .btn-close {
+        flex: 1;
+        padding: 12px 16px;
+        font-size: 15px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        background: transparent;
+        border: 1px solid hsl(220 13% 88%);
+        color: hsl(220 13% 35%);
+        transition:
+          background 0.15s ease,
+          color 0.15s ease;
+        font-family: inherit;
+      }
+
+      .dialog .btn-close:hover {
+        background: hsl(220 13% 96%);
+      }
+
+      .dialog .btn-close:active {
+        background: hsl(220 13% 92%);
       }
     </style>
   </head>
@@ -489,11 +523,18 @@
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         </div>
+
         <h2>활성화 완료</h2>
         <p>라이선스가 성공적으로 활성화되었습니다.</p>
-        <button type="button" class="btn-coupang" id="goToCoupangBtn">
-          쿠팡으로 이동하기
-        </button>
+
+        <div class="dialog-actions">
+          <button type="button" class="btn-close" id="closeDialogBtn">
+            창 닫기
+          </button>
+          <button type="button" class="btn-coupang" id="goToCoupangBtn">
+            쿠팡으로 이동하기
+          </button>
+        </div>
       </div>
     </div>
 
@@ -583,10 +624,19 @@
       });
 
       // 쿠팡으로 이동 버튼
-      document.getElementById("goToCoupangBtn").addEventListener("click", () => {
-        chrome.tabs.create({ url: "https://www.coupang.com" });
-        window.close();
-      });
+      document
+        .getElementById("goToCoupangBtn")
+        .addEventListener("click", () => {
+          chrome.tabs.create({ url: "https://www.coupang.com" });
+          window.close();
+        });
+
+      // 창 닫기 (현재 확장 탭 종료)
+      document
+        .getElementById("closeDialogBtn")
+        ?.addEventListener("click", () => {
+          window.close();
+        });
     </script>
   </body>
 </html>
