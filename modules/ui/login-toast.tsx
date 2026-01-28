@@ -40,7 +40,7 @@ export function LoginToast({ onOpenLogin }: { onOpenLogin: () => void }) {
           lineHeight: '1.5',
           minWidth: '300px',
           maxWidth: '400px',
-          animation: 'slideIn 0.3s ease-out',
+          animation: 'slideIn 0.15s ease-out',
         }}
       >
         <div

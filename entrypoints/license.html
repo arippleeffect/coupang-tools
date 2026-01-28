@@ -306,6 +306,89 @@
         background: hsl(0 0% 98%);
         border-top: 1px solid hsl(0 0% 92%);
       }
+
+      /* 성공 다이얼로그 오버레이 */
+      .dialog-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .dialog-overlay.hidden {
+        display: none;
+      }
+
+      .dialog {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        max-width: 360px;
+        width: 90%;
+        padding: 32px;
+        text-align: center;
+      }
+
+      .dialog-icon {
+        width: 64px;
+        height: 64px;
+        background: hsl(142 76% 96%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+      }
+
+      .dialog-icon svg {
+        width: 32px;
+        height: 32px;
+        stroke: hsl(142 71% 45%);
+        stroke-width: 2.5;
+        fill: none;
+      }
+
+      .dialog h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: hsl(0 0% 9%);
+        margin-bottom: 8px;
+      }
+
+      .dialog p {
+        font-size: 14px;
+        color: hsl(0 0% 45%);
+        margin-bottom: 24px;
+        line-height: 1.5;
+      }
+
+      .dialog .btn-coupang {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 15px;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        background: hsl(221.2 83.2% 53.3%);
+        color: white;
+        transition: all 0.15s ease;
+        font-family: inherit;
+      }
+
+      .dialog .btn-coupang:hover {
+        background: hsl(221.2 83.2% 48%);
+      }
+
+      .dialog .btn-coupang:active {
+        background: hsl(221.2 83.2% 43%);
+      }
     </style>
   </head>
   <body>
@@ -398,6 +481,22 @@
       <div class="footer">© 2026 쿠팡 지표 분석</div>
     </div>
 
+    <!-- 활성화 성공 다이얼로그 -->
+    <div id="successDialog" class="dialog-overlay hidden">
+      <div class="dialog">
+        <div class="dialog-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h2>활성화 완료</h2>
+        <p>라이센스가 성공적으로 활성화되었습니다.</p>
+        <button type="button" class="btn-coupang" id="goToCoupangBtn">
+          쿠팡으로 이동하기
+        </button>
+      </div>
+    </div>
+
     <script type="module">
       async function activateLicense(email, licenseKey) {
         return new Promise((resolve) => {
@@ -458,17 +557,11 @@
           if (response.ok && response.license) {
             await saveLicense(response.license);
 
-            showAlert(
-              response.message || "라이센스가 성공적으로 활성화되었습니다.",
-              "success",
-            );
-
             emailInput.value = "";
             licenseKeyInput.value = "";
 
-            setTimeout(() => {
-              window.close();
-            }, 2000);
+            // 성공 다이얼로그 표시
+            document.getElementById("successDialog").classList.remove("hidden");
           } else {
             showAlert(
               response.message ||
@@ -486,6 +579,12 @@
       });
 
       cancelBtn.addEventListener("click", () => {
+        window.close();
+      });
+
+      // 쿠팡으로 이동 버튼
+      document.getElementById("goToCoupangBtn").addEventListener("click", () => {
+        chrome.tabs.create({ url: "https://www.coupang.com" });
         window.close();
       });
     </script>

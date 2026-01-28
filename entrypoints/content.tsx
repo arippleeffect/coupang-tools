@@ -98,7 +98,7 @@ function createRetryHandler(store: ProductStore, ctx: any) {
         store.updateProduct({ ...product, status: "EMPTY" });
       } else {
         store.updateProduct({ ...product, status: "FAIL" });
-        renderErrorToast(ctx, error.message ?? error.error);
+        renderErrorToast(ctx, error.message ?? error.error, error.code);
       }
     }
   };

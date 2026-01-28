@@ -24,7 +24,7 @@ import {
  */
 export async function handleViewProductMetrics(
   store: ProductStore,
-  renderErrorToast: (ctx: any, message: string) => void,
+  renderErrorToast: (ctx: any, message: string, code?: string) => void,
   ctx: any,
 ) {
   try {
@@ -126,7 +126,7 @@ export async function handleViewProductMetrics(
       return;
     }
 
-    renderErrorToast(ctx, error.message ?? error.error);
+    renderErrorToast(ctx, error.message ?? error.error, error.code);
   }
 }
 
@@ -139,7 +139,7 @@ export async function handleViewProductMetrics(
  */
 function createRetryHandler(
   store: ProductStore,
-  renderErrorToast: (ctx: any, message: string) => void,
+  renderErrorToast: (ctx: any, message: string, code?: string) => void,
   ctx: any,
 ) {
   return async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -183,7 +183,7 @@ function createRetryHandler(
       } else {
         store.updateProduct({ ...product, status: "FAIL" });
         if (!isLoginRequiredError(error)) {
-          renderErrorToast(ctx, error.message ?? error.error);
+          renderErrorToast(ctx, error.message ?? error.error, error.code);
         }
       }
     }
