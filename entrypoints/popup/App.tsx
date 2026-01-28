@@ -39,7 +39,7 @@ function App() {
   async function handleRemoveLicense() {
     if (
       !confirm(
-        "라이센스를 삭제하시겠습니까?\n\n삭제 후 다시 활성화하려면 라이센스 키를 재입력해야 합니다.",
+        "라이선스를 삭제하시겠습니까?\n\n삭제 후 다시 활성화하려면 라이선스 키를 재입력해야 합니다.",
       )
     ) {
       return;
@@ -51,7 +51,7 @@ function App() {
       await checkLicenseStatus();
     } catch (error) {
       console.error("Failed to remove license:", error);
-      alert("라이센스 삭제에 실패했습니다.");
+      alert("라이선스 삭제에 실패했습니다.");
     }
   }
 
@@ -123,14 +123,14 @@ function App() {
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
             </div>
-            <h2>라이센스 활성화 필요</h2>
+            <h2>라이선스 활성화 필요</h2>
             <p>
-              이 도구를 사용하려면 라이센스 활성화가 필요합니다.
+              이 도구를 사용하려면 라이선스 활성화가 필요합니다.
               <br />
-              구매하신 라이센스 키를 입력해주세요.
+              구매하신 라이선스 키를 입력해주세요.
             </p>
             <button className="btn btn-primary" onClick={openLicensePage}>
-              라이센스 활성화
+              라이선스 활성화
             </button>
           </div>
         </div>
@@ -152,7 +152,7 @@ function App() {
       </div>
       <div className="content">
         <div className="license-info">
-          <h2>라이센스 정보</h2>
+          <h2>라이선스 정보</h2>
           <div className="info-row">
             <span className="info-label">상태</span>
             <span
@@ -171,10 +171,10 @@ function App() {
           </div>
         </div>
         <button className="btn btn-secondary" onClick={openLicensePage}>
-          라이센스 키 변경
+          라이선스 키 변경
         </button>
         <button className="btn btn-danger" onClick={handleRemoveLicense}>
-          라이센스 삭제
+          라이선스 삭제
         </button>
       </div>
       <div className="footer">v1.0 © 2026 쿠팡 지표 분석</div>

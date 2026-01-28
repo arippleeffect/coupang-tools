@@ -10,9 +10,9 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 /**
- * 라이센스 활성화
- * @param request - 이메일과 라이센스 키를 포함하는 활성화 요청
- * @returns 활성화 결과 및 라이센스 정보
+ * 라이선스 활성화
+ * @param request - 이메일과 라이선스 키를 포함하는 활성화 요청
+ * @returns 활성화 결과 및 라이선스 정보
  */
 export async function activateLicense(
   request: LicenseActivateRequest,
@@ -46,7 +46,7 @@ export async function activateLicense(
     );
 
     if (!response.ok) {
-      let errorMessage = "라이센스 활성화 요청 실패";
+      let errorMessage = "라이선스 활성화 요청 실패";
       let errorCode = "REQUEST_FAILED";
 
       try {
@@ -55,10 +55,10 @@ export async function activateLicense(
         if (response.status === 404) {
           errorMessage =
             errorData.error ||
-            "라이센스를 찾을 수 없습니다. 이메일과 라이센스 키를 확인해주세요.";
+            "라이선스를 찾을 수 없습니다. 이메일과 라이선스 키를 확인해주세요.";
           errorCode = "LICENSE_NOT_FOUND";
         } else if (response.status === 400) {
-          errorMessage = errorData.error || "라이센스 업데이트에 실패했습니다.";
+          errorMessage = errorData.error || "라이선스 업데이트에 실패했습니다.";
           errorCode = "UPDATE_FAILED";
         } else {
           errorMessage = errorData.error || errorMessage;
@@ -86,7 +86,7 @@ export async function activateLicense(
       return {
         ok: false,
         message:
-          "유효하지 않은 라이센스 키입니다. 이메일과 라이센스 키를 확인해주세요.",
+          "유효하지 않은 라이선스 키입니다. 이메일과 라이선스 키를 확인해주세요.",
         error: "INVALID_LICENSE",
       };
     }
@@ -101,7 +101,7 @@ export async function activateLicense(
     return {
       ok: true,
       license: licenseInfo,
-      message: "라이센스가 성공적으로 활성화되었습니다.",
+      message: "라이선스가 성공적으로 활성화되었습니다.",
     };
   } catch (fetchError) {
     console.error("[License API] Network error:", fetchError);
@@ -114,7 +114,7 @@ export async function activateLicense(
 }
 
 /**
- * 라이센스 비활성화
+ * 라이선스 비활성화
  * @param request - 활성화 토큰을 포함하는 비활성화 요청
  * @returns 비활성화 결과
  */
@@ -124,6 +124,6 @@ export async function deactivateLicense(
   await new Promise((resolve) => setTimeout(resolve, 300));
   return {
     ok: true,
-    message: "라이센스가 비활성화되었습니다.",
+    message: "라이선스가 비활성화되었습니다.",
   };
 }

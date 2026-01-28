@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>쿠팡 지표 분석 - 라이센스 활성화</title>
+    <title>쿠팡 지표 분석 - 라이선스 활성화</title>
     <style>
       * {
         margin: 0;
@@ -410,7 +410,7 @@
           </svg>
         </div>
         <h1>쿠팡 지표 분석</h1>
-        <p>라이센스 활성화</p>
+        <p>라이선스 활성화</p>
       </div>
 
       <div class="form-container">
@@ -431,7 +431,7 @@
           </div>
 
           <div class="form-group">
-            <label for="licenseKey">라이센스 키</label>
+            <label for="licenseKey">라이선스 키</label>
             <input
               type="text"
               id="licenseKey"
@@ -439,11 +439,11 @@
               placeholder="XXXX-XXXX-XXXX-XXXX"
               required
             />
-            <div class="help-text">이메일로 받은 라이센스 키를 입력하세요</div>
+            <div class="help-text">이메일로 받은 라이선스 키를 입력하세요</div>
           </div>
 
           <button type="submit" class="btn btn-primary" id="activateBtn">
-            라이센스 활성화
+            라이선스 활성화
           </button>
 
           <button type="button" class="btn btn-secondary" id="cancelBtn">
@@ -452,7 +452,7 @@
         </form>
 
         <div class="info-section">
-          <h3>라이센스 키 받는 방법</h3>
+          <h3>라이선스 키 받는 방법</h3>
           <p>
             이메일로 전송됩니다. 이메일이 도착하지 않았다면 스팸 폴더를
             확인해주세요.
@@ -466,14 +466,14 @@
               <strong>양도 및 공유 금지:</strong> 지급받은 본인만 사용 가능
             </li>
             <li>
-              <strong>단일 브라우저 제한:</strong> 하나의 라이센스는 하나의
+              <strong>단일 브라우저 제한:</strong> 하나의 라이선스는 하나의
               브라우저에서만 사용 가능
             </li>
             <li>
               <strong>재활성화:</strong> 다른 브라우저에서 활성화하면 기존
               브라우저는 자동 비활성화됨
             </li>
-            <li>위반 시 라이센스 영구 정지</li>
+            <li>위반 시 라이선스 영구 정지</li>
           </ul>
         </div>
       </div>
@@ -490,7 +490,7 @@
           </svg>
         </div>
         <h2>활성화 완료</h2>
-        <p>라이센스가 성공적으로 활성화되었습니다.</p>
+        <p>라이선스가 성공적으로 활성화되었습니다.</p>
         <button type="button" class="btn-coupang" id="goToCoupangBtn">
           쿠팡으로 이동하기
         </button>
@@ -544,7 +544,7 @@
         const licenseKey = licenseKeyInput.value.trim();
 
         if (!email || !licenseKey) {
-          showAlert("이메일과 라이센스 키를 모두 입력해주세요.", "error");
+          showAlert("이메일과 라이선스 키를 모두 입력해주세요.", "error");
           return;
         }
 
@@ -565,7 +565,7 @@
           } else {
             showAlert(
               response.message ||
-                "라이센스 활성화에 실패했습니다. 다시 시도해주세요.",
+                "라이선스 활성화에 실패했습니다. 다시 시도해주세요.",
               "error",
             );
           }
@@ -574,7 +574,7 @@
           showAlert("오류가 발생했습니다. 다시 시도해주세요.", "error");
         } finally {
           activateBtn.disabled = false;
-          activateBtn.innerHTML = "라이센스 활성화";
+          activateBtn.innerHTML = "라이선스 활성화";
         }
       });
 

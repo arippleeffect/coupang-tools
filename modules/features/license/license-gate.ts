@@ -1,8 +1,8 @@
 import { isLicenseValid } from "@/modules/core/license-storage";
 
 /**
- * 라이센스 유효성 확인 및 활성화 페이지로 리디렉션
- * @returns 라이센스 유효 여부
+ * 라이선스 유효성 확인 및 활성화 페이지로 리디렉션
+ * @returns 라이선스 유효 여부
  */
 export async function checkLicenseAndRedirect(): Promise<boolean> {
   const isValid = await isLicenseValid();
@@ -17,7 +17,7 @@ export async function checkLicenseAndRedirect(): Promise<boolean> {
 }
 
 /**
- * 라이센스 필요 UI 오버레이 표시
+ * 라이선스 필요 UI 오버레이 표시
  */
 export function showLicenseRequiredOverlay(): void {
   if (document.getElementById("ct-license-overlay")) {
@@ -66,15 +66,15 @@ export function showLicenseRequiredOverlay(): void {
         color: #1a1a1a;
         margin-bottom: 12px;
         font-weight: 600;
-      ">라이센스 활성화 필요</h2>
+      ">라이선스 활성화 필요</h2>
       <p style="
         font-size: 15px;
         color: #666;
         line-height: 1.6;
         margin-bottom: 24px;
       ">
-        이 기능을 사용하려면 라이센스 활성화가 필요합니다.<br>
-        구매하신 라이센스 키를 입력해주세요.
+        이 기능을 사용하려면 라이선스 활성화가 필요합니다.<br>
+        구매하신 라이선스 키를 입력해주세요.
       </p>
       <button id="ct-activate-license-btn" style="
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -87,7 +87,7 @@ export function showLicenseRequiredOverlay(): void {
         cursor: pointer;
         margin-bottom: 12px;
         width: 100%;
-      ">라이센스 활성화</button>
+      ">라이선스 활성화</button>
       <button id="ct-close-overlay-btn" style="
         background: #f5f5f5;
         color: #666;
@@ -128,7 +128,7 @@ export function showLicenseRequiredOverlay(): void {
 }
 
 /**
- * 라이센스 필요 오버레이 제거
+ * 라이선스 필요 오버레이 제거
  */
 export function removeLicenseRequiredOverlay(): void {
   const overlay = document.getElementById("ct-license-overlay");

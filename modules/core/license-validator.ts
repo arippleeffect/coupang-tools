@@ -10,8 +10,8 @@ let lastValidationTime = 0;
 let lastValidationResult = false;
 
 /**
- * 사용자 액션 시 라이센스 유효성 검증 (캐시 사용)
- * @returns 라이센스 유효 여부
+ * 사용자 액션 시 라이선스 유효성 검증 (캐시 사용)
+ * @returns 라이선스 유효 여부
  */
 export async function validateLicenseOnAction(): Promise<boolean> {
   const now = Date.now();
@@ -30,7 +30,7 @@ export async function validateLicenseOnAction(): Promise<boolean> {
 
 /**
  * 검증 캐시 무효화
- * 라이센스 활성화/비활성화 시 호출하여 즉시 재검증 유도
+ * 라이선스 활성화/비활성화 시 호출하여 즉시 재검증 유도
  */
 export function invalidateValidationCache(): void {
   lastValidationTime = 0;
@@ -38,8 +38,8 @@ export function invalidateValidationCache(): void {
 }
 
 /**
- * 백엔드 API를 통한 라이센스 검증
- * @returns 라이센스 유효 여부
+ * 백엔드 API를 통한 라이선스 검증
+ * @returns 라이선스 유효 여부
  */
 async function validateLicense(): Promise<boolean> {
   try {
@@ -65,8 +65,8 @@ async function validateLicense(): Promise<boolean> {
 }
 
 /**
- * 라이센스 검증 API 호출
- * @param license - 검증할 라이센스 정보
+ * 라이선스 검증 API 호출
+ * @param license - 검증할 라이선스 정보
  * @returns API 검증 결과
  */
 async function callValidationAPI(license: LicenseInfo): Promise<boolean> {

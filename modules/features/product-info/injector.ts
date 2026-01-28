@@ -6,10 +6,10 @@ import { SELECTORS } from "@/modules/constants/selectors";
  * @returns 주입 성공 여부
  */
 export function injectHelloBannerAfterHeader(
-  text: string = "안녕하세요"
+  text: string = "안녕하세요",
 ): boolean {
   const root = document.querySelector(
-    SELECTORS.PRODUCT_DETAIL_CONTAINER
+    SELECTORS.PRODUCT_DETAIL_CONTAINER,
   ) as HTMLElement | null;
   if (!root) return false;
   if (root.querySelector(".ct-hello.inline")) return true;
@@ -41,7 +41,7 @@ export function injectProductInfoAfterHeader(info: {
   totalSales?: string;
 }): boolean {
   const root = document.querySelector(
-    SELECTORS.PRODUCT_DETAIL_CONTAINER
+    SELECTORS.PRODUCT_DETAIL_CONTAINER,
   ) as HTMLElement | null;
   if (!root) return false;
 
@@ -72,10 +72,10 @@ export function injectProductInfoAfterHeader(info: {
         <span class="kv"><span class="label">브랜드</span><span class="value">${brand}</span></span>
         <span class="sep">·</span>
         <span class="kv"><span class="label">조회</span><span class="value chip pv">${fmtInt(
-          pv
+          pv,
         )}</span></span>
         <span class="kv"><span class="label">판매</span><span class="value chip sales">${fmtInt(
-          sales
+          sales,
         )}</span></span>
         <span class="kv"><span class="label">전환</span><span class="value chip rate">${rate}</span></span>
         <span class="kv"><span class="label">매출</span><span class="value chip sales">${totalSales}</span></span>
@@ -95,7 +95,7 @@ export function injectProductInfoAfterHeader(info: {
  */
 export function injectLoadingProductInfo(): boolean {
   const root = document.querySelector(
-    SELECTORS.PRODUCT_DETAIL_CONTAINER
+    SELECTORS.PRODUCT_DETAIL_CONTAINER,
   ) as HTMLElement | null;
   if (!root) return false;
 
@@ -131,7 +131,7 @@ export function injectLoadingProductInfo(): boolean {
  */
 export function injectFailProductInfo(pid: string): boolean {
   const root = document.querySelector(
-    SELECTORS.PRODUCT_DETAIL_CONTAINER
+    SELECTORS.PRODUCT_DETAIL_CONTAINER,
   ) as HTMLElement | null;
   if (!root) return false;
 
@@ -163,7 +163,7 @@ export function injectFailProductInfo(pid: string): boolean {
  */
 export function injectEmptyProductInfo(): boolean {
   const root = document.querySelector(
-    SELECTORS.PRODUCT_DETAIL_CONTAINER
+    SELECTORS.PRODUCT_DETAIL_CONTAINER,
   ) as HTMLElement | null;
   if (!root) return false;
 
@@ -193,7 +193,7 @@ export function injectEmptyProductInfo(): boolean {
  */
 export function injectLoginRequiredProductInfo(): boolean {
   const root = document.querySelector(
-    SELECTORS.PRODUCT_DETAIL_CONTAINER
+    SELECTORS.PRODUCT_DETAIL_CONTAINER,
   ) as HTMLElement | null;
   if (!root) return false;
 

@@ -51,7 +51,7 @@ export function Complete({ p }: { p: ProductState }) {
         </span>
       </div>
       <div className="metric">
-        <span className="label">전환률</span>
+        <span className="label">전환율</span>
         <span className="value chip rate">{p.data?.rate}</span>
       </div>
       <div className="metric">

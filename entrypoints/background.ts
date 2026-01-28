@@ -42,7 +42,7 @@ export default defineBackground(() => {
       // No license - show only activation menu
       browser.contextMenus.create({
         id: "activate_license",
-        title: "라이센스 활성화",
+        title: "라이선스 활성화",
         contexts: ["page"],
       });
       return;
@@ -176,7 +176,7 @@ export default defineBackground(() => {
 
             sendResponse({ ok: response.ok, message: response.message });
           } else {
-            sendResponse({ ok: false, message: "라이센스가 없습니다." });
+            sendResponse({ ok: false, message: "라이선스가 없습니다." });
           }
         }
       })();
@@ -250,8 +250,8 @@ const searchProductByKeyword = async (keyword: string | number) => {
       return {
         ok: false,
         code: "NO_XSRF_TOKEN",
-        message: "새탭에 쿠팡윙로그인을 해주세요",
-        error: "새탭에 쿠팡윙로그인을 해주세요",
+        message: "새 탭에서 쿠팡윙 로그인을 해주세요",
+        error: "새 탭에서 쿠팡윙 로그인을 해주세요",
       };
     }
 
@@ -306,7 +306,7 @@ async function fetchPreMatchingSearch<T>({
     throw formatError(
       {
         code: "PRE_MATCHING_SEARCH_FAILED",
-        message: `[${res.status}] 상품 검색 요청 실패:${message} \n\n 잠시후 다시 시도해주세요`,
+        message: `[${res.status}] 상품 검색 요청 실패:${message} \n\n 잠시 후 다시 시도해주세요`,
         error: bodyText,
       },
       "PRE_MATCHING_SEARCH_FAILED",

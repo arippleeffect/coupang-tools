@@ -19,10 +19,10 @@
 - 일반 상품과 광고 상품을 별도 시트로 구분
 - 자동 날짜/시간 포함 파일명 생성
 
-### 4. 라이센스 관리
-- 이메일 기반 라이센스 활성화
+### 4. 라이선스 관리
+- 이메일 기반 라이선스 활성화
 - Supabase 기반 인증 시스템
-- 주기적인 라이센스 유효성 검증
+- 주기적인 라이선스 유효성 검증
 
 ## 기술 스택
 
@@ -86,30 +86,30 @@ pnpm zip:firefox
 ├── entrypoints/          # 익스텐션 엔트리포인트
 │   ├── background.ts     # 백그라운드 스크립트
 │   ├── content.tsx       # 컨텐츠 스크립트
-│   └── license.html      # 라이센스 활성화 페이지
+│   └── license.html      # 라이선스 활성화 페이지
 ├── modules/              # 핵심 모듈
 │   ├── api/              # API 통신
 │   │   ├── client.ts     # 쿠팡 API 클라이언트
-│   │   └── license.ts    # 라이센스 API
+│   │   └── license.ts    # 라이선스 API
 │   ├── core/             # 핵심 기능
 │   │   ├── dom.ts        # DOM 유틸리티
 │   │   ├── state.ts      # 상태 관리
-│   │   ├── license-storage.ts      # 라이센스 저장소
-│   │   └── license-validator.ts    # 라이센스 검증
+│   │   ├── license-storage.ts      # 라이선스 저장소
+│   │   └── license-validator.ts    # 라이선스 검증
 │   ├── features/         # 기능 모듈
 │   │   ├── excel-export/           # Excel 내보내기
 │   │   ├── product-info/           # 상품 정보 표시
 │   │   ├── product-metrics/        # 상품 지표 분석
-│   │   └── license/                # 라이센스 관리
+│   │   └── license/                # 라이선스 관리
 │   └── constants/        # 상수 정의
 └── types/                # TypeScript 타입 정의
 ```
 
 ## 사용 방법
 
-### 라이센스 활성화
+### 라이선스 활성화
 1. 익스텐션 아이콘 클릭
-2. 이메일과 라이센스 키 입력
+2. 이메일과 라이선스 키 입력
 3. "활성화" 버튼 클릭
 
 ### 상품 지표 보기
@@ -125,9 +125,9 @@ pnpm zip:firefox
 
 ## 주요 기능 설명
 
-### 라이센스 시스템
+### 라이선스 시스템
 - Activation Token 기반 인증
-- 로컬 스토리지에 라이센스 정보 저장
+- 로컬 스토리지에 라이선스 정보 저장
 - 1시간마다 자동 검증
 - 사용자 액션 시 캐시 기반 빠른 검증 (5분 TTL)
 
@@ -155,9 +155,9 @@ pnpm zip:firefox
 3. **API 제한**: 쿠팡 API의 Rate Limiting에 따라 과도한 요청 시 일시적 차단 가능
 4. **브라우저 제한**: Chrome/Edge 등 Chromium 기반 브라우저에서만 동작
 
-## 라이센스
+## 라이선스
 
-이 프로젝트는 비공개 소프트웨어이며, 라이센스가 필요합니다.
+이 프로젝트는 비공개 소프트웨어이며, 라이선스가 필요합니다.
 
 ## 지원
 

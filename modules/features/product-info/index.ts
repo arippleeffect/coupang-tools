@@ -39,10 +39,10 @@ async function injectLicenseRequiredBanner() {
   banner.innerHTML = `
     <div style="font-size: 48px; margin-bottom: 12px;">🔐</div>
     <h3 style="font-size: 18px; font-weight: 700; color: #991b1b; margin-bottom: 8px;">
-      라이센스 활성화 필요
+      라이선스 활성화 필요
     </h3>
     <p style="font-size: 14px; color: #991b1b; margin-bottom: 16px;">
-      이 기능을 사용하려면 라이센스를 활성화해야 합니다.
+      이 기능을 사용하려면 라이선스를 활성화해야 합니다.
     </p>
     <button class="license-activate-btn" style="
       background: #3b82f6;
@@ -55,7 +55,7 @@ async function injectLicenseRequiredBanner() {
       cursor: pointer;
       transition: all 0.2s;
     ">
-      라이센스 활성화
+      라이선스 활성화
     </button>
   `;
 
