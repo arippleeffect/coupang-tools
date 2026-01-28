@@ -8,10 +8,6 @@ import { setupLazyProductInfo } from "@/modules/features/product-info";
 import { updateBanner, resetBanner } from "@/modules/features/banner";
 import { SELECTORS } from "@/modules/constants/selectors";
 import { showLoginToast } from "@/modules/features/login/login-handler";
-import {
-  checkLicenseAndRedirect,
-  showLicenseRequiredOverlay,
-} from "@/modules/features/license/license-gate";
 
 export default defineContentScript({
   matches: [
@@ -47,13 +43,6 @@ export default defineContentScript({
       }
 
       if (msg.type === MESSAGE_TYPE.VIEW_PRODUCT_METRICS) {
-        // Check license before proceeding
-        const hasValidLicense = await checkLicenseAndRedirect();
-        if (!hasValidLicense) {
-          showLicenseRequiredOverlay();
-          return;
-        }
-
         await handleViewProductMetrics(store, renderErrorToast, ctx);
       }
     });
@@ -88,7 +77,7 @@ function createRetryHandler(store: ProductStore, ctx: any) {
           sales: response.salesLast28d,
           totalSales: calculateTotalSales(
             response.salesLast28d,
-            response.salePrice
+            response.salePrice,
           ),
           rate: calculateRate(response.pvLast28Day, response.salesLast28d),
         },

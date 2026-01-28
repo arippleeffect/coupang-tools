@@ -74,7 +74,7 @@ async function injectLicenseRequiredBanner() {
     window.open(licensePageUrl, "_blank");
   };
 
-  const anchor = root.querySelector(SELECTORS.PRODUCT_TITLE);
+  const anchor = root.querySelector("");
   if (anchor?.parentElement) {
     anchor.parentElement.insertBefore(banner, anchor.nextSibling);
   }
