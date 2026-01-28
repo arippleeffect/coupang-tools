@@ -10,9 +10,19 @@ export function ErrorToast({ message, code }: Props) {
 
   useEffect(() => {
     if (isNoProductList) {
-      const searchInput = document.querySelector<HTMLInputElement>(
-        'input.headerSearchKeyword, input[name="q"]'
+      // 기존 셀렉터로 먼저 찾고, 없으면 쿠팡 검색창 찾기
+
+      const inputs = Array.from(
+        document.querySelectorAll<HTMLInputElement>(
+          'input.headerSearchKeyword, input[name="q"]',
+        ),
       );
+
+      const searchInput = inputs.find((input) => {
+        const rect = input.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 && !input.disabled;
+      });
+
       if (searchInput) {
         searchInput.focus();
         searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -100,7 +110,8 @@ export function ErrorToast({ message, code }: Props) {
           padding: "16px 20px",
           borderRadius: "12px",
           boxShadow: "0 4px 16px rgba(0,0,0,.3)",
-          fontFamily: "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif",
+          fontFamily:
+            "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif",
           fontSize: "14px",
           lineHeight: "1.5",
           minWidth: "300px",
