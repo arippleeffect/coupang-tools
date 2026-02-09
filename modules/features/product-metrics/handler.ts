@@ -1,4 +1,5 @@
 import { ProductStore } from "@/modules/core/state";
+import type { ProductState } from "@/types";
 import {
   fetchProducts,
   fetchSingleProduct,
@@ -15,6 +16,49 @@ import {
   isLoginRequiredError,
   showLoginToast,
 } from "@/modules/features/login/login-handler";
+import { validateOptionPrices } from "@/modules/features/price-validation";
+
+/**
+ * 가격 검증 수행 헬퍼
+ * @param store - 상품 스토어
+ * @param product - 상품 상태
+ * @param vendorItemId - 벤더 아이템 ID
+ * @param salePrice - 판매 가격
+ * @param sales - 판매량
+ */
+async function runPriceValidation(
+  store: ProductStore,
+  product: ProductState,
+  vendorItemId: string,
+  salePrice: number,
+  sales: number,
+) {
+  try {
+    const priceValidation = await validateOptionPrices(
+      product.productId,
+      vendorItemId,
+      salePrice,
+    );
+
+    const current = store.findProduct(product.dataId);
+    if (priceValidation?.hasPriceDifference && current?.data) {
+      const lowestTotalSales = calculateTotalSales(
+        sales,
+        priceValidation.lowestPrice,
+      );
+      store.updateProduct({
+        ...current,
+        data: {
+          ...current.data,
+          totalSales: lowestTotalSales,
+          priceValidation,
+        },
+      });
+    }
+  } catch {
+    // 가격 검증 실패 시 기존 지표 유지
+  }
+}
 
 /**
  * 상품 지표 보기 핸들러
@@ -55,7 +99,9 @@ export async function handleViewProductMetrics(
 
     products.forEach((product) => {
       const matched = result.find(
-        (r) => String(r.productId) === String(product.productId),
+        (r) =>
+          String(r.productId) === String(product.productId) &&
+          String(r.itemId) === String(product.itemId),
       );
 
       if (!matched) {
@@ -77,6 +123,17 @@ export async function handleViewProductMetrics(
           rate: calculateRate(matched.pvLast28Day, matched.salesLast28d),
         },
       });
+
+      // 1차 루프에서 바로 가격 검증 수행
+      if (product.vendorItemId) {
+        runPriceValidation(
+          store,
+          product,
+          product.vendorItemId,
+          matched.salePrice,
+          matched.salesLast28d,
+        );
+      }
     });
 
     const noDataStates = store
@@ -87,7 +144,7 @@ export async function handleViewProductMetrics(
       store.updateProduct({ ...product, status: "LOADING", data: undefined });
 
       try {
-        const response = await fetchSingleProduct(product.productId!);
+        const response = await fetchSingleProduct(product.itemId!);
 
         store.updateProduct({
           ...product,
@@ -103,6 +160,17 @@ export async function handleViewProductMetrics(
             rate: calculateRate(response.pvLast28Day, response.salesLast28d),
           },
         });
+
+        // 2차 루프에서 fetchSingleProduct 성공 후 바로 가격 검증 수행
+        if (product.vendorItemId) {
+          runPriceValidation(
+            store,
+            product,
+            product.vendorItemId,
+            response.salePrice,
+            response.salesLast28d,
+          );
+        }
       } catch (err: any) {
         if (isLoginRequiredError(err)) {
           showLoginToast();
@@ -152,7 +220,7 @@ function createRetryHandler(
     try {
       store.updateProduct({ ...product, status: "LOADING", data: undefined });
 
-      const retryResponse = await fetchSingleProduct(product.productId!);
+      const retryResponse = await fetchSingleProduct(product.itemId!);
 
       store.updateProduct({
         ...product,

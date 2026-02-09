@@ -1,7 +1,9 @@
 import {
   waitForElement,
   debounce,
-  getPidFromLocation,
+  getIdFromLocation,
+  getVendorItemIdFromUrl,
+  getProductIdFromPath,
 } from "@/modules/core/dom";
 import { fetchSingleProduct, calculateRate } from "@/modules/api/client";
 import { formatCurrencyKRW } from "@/modules/ui/metrics";
@@ -18,6 +20,7 @@ import { SELECTORS } from "@/modules/constants/selectors";
 import { isLoginRequiredError } from "@/modules/features/login/login-handler";
 import { showErrorToast } from "./toast-error";
 import { validateLicenseOnAction } from "@/modules/core/license-validator";
+import { validateOptionPrices } from "@/modules/features/price-validation";
 
 async function injectLicenseRequiredBanner() {
   const root = document.querySelector(SELECTORS.PRODUCT_DETAIL_CONTAINER);
@@ -91,14 +94,45 @@ export async function fetchAndInjectProductInfo(pid: string) {
         ? formatCurrencyKRW(matched.salesLast28d * matched.salePrice)
         : "-";
 
+    // 먼저 기본 지표 렌더링
     injectProductInfoAfterHeader({
       productId: String(pid),
+      itemId: matched.itemId,
       brandName: matched?.brandName,
       pvLast28Day: matched?.pvLast28Day,
       salesLast28d: matched?.salesLast28d,
       rateText,
       totalSales: totalSalesValue,
     });
+
+    // 비동기로 가격 검증 수행 (실패해도 기존 지표 유지)
+    const productId = getProductIdFromPath();
+    const vendorItemId = getVendorItemIdFromUrl();
+    if (productId && vendorItemId && typeof matched.salePrice === "number") {
+      validateOptionPrices(productId, vendorItemId, matched.salePrice).then(
+        (priceValidation) => {
+          if (priceValidation?.hasPriceDifference) {
+            // 가격 차이 발견 시 최저가 기준으로 재렌더링
+            const lowestTotalSales =
+              typeof matched.salesLast28d === "number"
+                ? formatCurrencyKRW(
+                    matched.salesLast28d * priceValidation.lowestPrice,
+                  )
+                : "-";
+            injectProductInfoAfterHeader({
+              productId: String(pid),
+              itemId: matched.itemId,
+              brandName: matched?.brandName,
+              pvLast28Day: matched?.pvLast28Day,
+              salesLast28d: matched?.salesLast28d,
+              rateText,
+              totalSales: lowestTotalSales,
+              priceValidation,
+            });
+          }
+        },
+      );
+    }
   } catch (e: any) {
     if (isLoginRequiredError(e)) {
       injectLoginRequiredProductInfo();
@@ -123,8 +157,8 @@ export async function fetchAndInjectProductInfo(pid: string) {
  */
 export function setupLazyProductInfo() {
   const exec = async () => {
-    const pid = getPidFromLocation();
-    if (!pid) return;
+    const id = getIdFromLocation();
+    if (!id) return;
 
     try {
       await waitForElement(SELECTORS.PRODUCT_DETAIL_CONTAINER, 12000);
@@ -144,15 +178,15 @@ export function setupLazyProductInfo() {
 
     // License valid - show product loading
     injectLoadingProductInfo();
-    fetchAndInjectProductInfo(pid);
+    fetchAndInjectProductInfo(id);
 
     const root = document.querySelector(SELECTORS.PRODUCT_DETAIL_CONTAINER);
     if (!root) return;
 
     const ensure = debounce(async () => {
       const banner = root.querySelector(SELECTORS.CT_PRODINFO);
-      const curPid = getPidFromLocation();
-      if (!banner && curPid) {
+      const curId = getIdFromLocation();
+      if (!banner && curId) {
         injectLicenseCheckingInfo();
         const hasLicense = await validateLicenseOnAction();
         if (!hasLicense) {
@@ -160,7 +194,7 @@ export function setupLazyProductInfo() {
           return;
         }
         injectLoadingProductInfo();
-        fetchAndInjectProductInfo(curPid);
+        fetchAndInjectProductInfo(curId);
       }
     }, 150);
 
@@ -169,8 +203,8 @@ export function setupLazyProductInfo() {
 
     const reMount = () =>
       setTimeout(async () => {
-        const npid = getPidFromLocation();
-        if (npid) {
+        const nid = getIdFromLocation();
+        if (nid) {
           injectLicenseCheckingInfo();
           const hasLicense = await validateLicenseOnAction();
           if (!hasLicense) {
@@ -178,7 +212,7 @@ export function setupLazyProductInfo() {
             return;
           }
           injectLoadingProductInfo();
-          fetchAndInjectProductInfo(npid);
+          fetchAndInjectProductInfo(nid);
         }
       }, 60);
 

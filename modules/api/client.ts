@@ -37,15 +37,15 @@ export async function fetchProducts(
 
 /**
  * 단일 상품 정보 조회
- * @param productId - 상품 ID
+ * @param itemId - 옵션 ID
  * @returns 상품 정보
  */
 export async function fetchSingleProduct(
-  productId: string
+  itemId: string
 ): Promise<CoupangProduct> {
   const response = await sendMessage({
     type: MESSAGE_TYPE.GET_PRODUCT,
-    keyword: productId,
+    keyword: itemId,
   });
 
   if (!response.ok) {
@@ -53,13 +53,13 @@ export async function fetchSingleProduct(
   }
 
   const result = (response.data?.result as CoupangProduct[]) || [];
-  const matched = result.find((r) => String(r.productId) === productId);
+  const matched = result.find((r) => String(r.itemId) === itemId);
 
   if (!matched) {
     throw {
       code: "EMPTY",
-      message: `No product found for productId=${productId}`,
-      error: `No product found for productId=${productId}`,
+      message: `No product found for itemId=${itemId}`,
+      error: `No product found for itemId=${itemId}`,
     };
   }
 

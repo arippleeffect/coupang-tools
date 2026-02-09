@@ -77,10 +77,42 @@ export function isCoupangProductUrl(href: string): boolean {
 }
 
 /**
+ * URL에서 vendorItemId 추출
+ * @param url - 파싱할 URL (기본값: location.href)
+ * @returns vendorItemId 또는 null
+ */
+export function getVendorItemIdFromUrl(url?: string): string | null {
+  try {
+    const u = new URL(url ?? location.href, location.origin);
+    return u.searchParams.get("vendorItemId");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * URL pathname에서 productId 추출 (/products/{id})
+ * @param url - 파싱할 URL (기본값: location.href)
+ * @returns productId 또는 null
+ */
+export function getProductIdFromPath(url?: string): string | null {
+  try {
+    const u = new URL(url ?? location.href, location.origin);
+    const m = u.pathname.match(/\/products\/(\d+)/);
+    return m ? m[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * 현재 페이지에서 상품 ID 추출
  * @returns 상품 ID 또는 null
  */
-export function getPidFromLocation(): string | null {
+export function getIdFromLocation(): string | null {
+  const itemId = new URL(location.href).searchParams.get("itemId");
+  if (itemId) return itemId;
+
   const m =
     location.pathname.match(/\/products\/(\d+)/) ||
     location.href.match(/\/products\/(\d+)/);
