@@ -34,6 +34,16 @@ export function liElementsToProducts(
     const match = aTag && aTag.match(/products\/(\d+)/);
     const productId = match ? match[1] : undefined;
 
+    let itemId: string | undefined;
+    let vendorItemId: string | undefined;
+    try {
+      if (aTag) {
+        const url = new URL(aTag, location.origin);
+        itemId = url.searchParams.get("itemId") ?? undefined;
+        vendorItemId = url.searchParams.get("vendorItemId") ?? undefined;
+      }
+    } catch {}
+
     const type: ProductType = el.querySelector(SELECTORS.AD_MARK)
       ? "AD"
       : "NORMAL";
@@ -49,6 +59,8 @@ export function liElementsToProducts(
     return {
       dataId,
       productId,
+      itemId,
+      vendorItemId,
       productName,
       status: "LOADING",
       type,
