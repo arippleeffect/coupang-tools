@@ -29,7 +29,7 @@ export function updateBanner(
 }
 
 export function resetBanner() {
-  bannerUi?.remove();
+  bannerUi?.unmount();
   bannerUi = null;
 }
 
