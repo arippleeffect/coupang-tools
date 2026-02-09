@@ -5,6 +5,7 @@ import { renderErrorToast } from "@/modules/ui/toastRenderer";
 import { handleViewProductMetrics } from "@/modules/features/product-metrics";
 import { renderProductBox } from "@/modules/features/product-metrics/renderer";
 import { setupLazyProductInfo } from "@/modules/features/product-info";
+import { handleVendorReturnExport } from "@/modules/features/excel-export";
 import { updateBanner, resetBanner } from "@/modules/features/banner";
 import { SELECTORS } from "@/modules/constants/selectors";
 import { showLoginToast } from "@/modules/features/login/login-handler";
@@ -29,6 +30,11 @@ export default defineContentScript({
       updateBanner(ctx, state);
     });
     browser.runtime.onMessage.addListener(async (msg) => {
+      if (msg.type === MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL) {
+        await handleVendorReturnExport();
+        return;
+      }
+
       if (msg.type !== MESSAGE_TYPE.EXCEL_DOWNLOAD_BANNER_INIT && !msg.token) {
         showLoginToast();
         return;

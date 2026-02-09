@@ -1,4 +1,5 @@
 export enum MESSAGE_TYPE {
+  ROCKETGROSS_EXPORT_EXCEL = "ROCKETGROSS_EXPORT_EXCEL",
   VIEW_PRODUCT_METRICS = "VIEW_PRODUCT_METRICS",
   GET_PRODUCT = "GET_PRODUCT",
   EXCEL_DOWNLOAD_BANNER_INIT = "EXCEL_DOWNLOAD_BANNER_INIT",
@@ -66,17 +67,90 @@ export type MessageResponse<T> = {
 
 type ProductStatus = "LOADING" | "COMPLETE" | "FAIL" | "EMPTY";
 export type ProductType = "NORMAL" | "AD";
+export type OptionPriceInfo = {
+  itemId: number;
+  vendorItemId: number;
+  salePrice: number;
+  productUrl: string;
+  optionName?: string;
+};
+
+export type PriceValidationResult = {
+  hasPriceDifference: boolean;
+  options: OptionPriceInfo[];
+  lowestPrice: number;
+  lowestItemId: number;
+  apiPrice: number;
+};
+
+export type QuantityInfoPrice = {
+  salePrice: string;
+  i18nSalePrice?: { amount: string };
+};
+
+export type QuantityInfoItemInfo = {
+  itemId: number;
+  productId: number;
+  vendorItemId: number;
+};
+
+export type QuantityInfoOptionItem = {
+  itemId: number;
+  vendorItemId: number;
+  finalPrice: string;
+  productUrl?: string;
+  title?: string;
+  itemName?: string;
+  optionItemName?: string;
+  itemBasicInfo?: { itemName?: string };
+};
+
+export type QuantityInfoDetailItem = {
+  action?: {
+    event?: { url?: string };
+  };
+  priceInfo?: {
+    finalPrice: string;
+    finalUnitPrice?: string;
+  };
+  itemBasicInfo?: {
+    itemId?: number;
+    itemName?: string;
+    vendorItemId?: number;
+  };
+  stockInfo?: {
+    soldOut?: boolean;
+  };
+  // fallback: top-level fields (일부 응답에서 itemBasicInfo 없이 제공)
+  itemId?: number;
+  vendorItemId?: number;
+  productUrl?: string;
+};
+
+export type QuantityInfoResponse = {
+  price: QuantityInfoPrice;
+  moduleData?: {
+    itemInfo?: QuantityInfoItemInfo;
+    viewType?: string;
+    optionList?: QuantityInfoOptionItem[];
+    items?: QuantityInfoDetailItem[];
+  }[];
+};
+
 type ProductData = {
   brandName: string;
   pv: number;
   sales: number;
   totalSales?: number;
   rate: string;
+  priceValidation?: PriceValidationResult;
 };
 export type ProductState = {
   dataId: string;
   productName: string;
   productId: string;
+  itemId: string;
+  vendorItemId?: string;
   status: ProductStatus;
   type: ProductType;
   data?: ProductData;
