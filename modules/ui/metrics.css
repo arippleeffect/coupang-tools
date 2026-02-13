@@ -124,7 +124,7 @@
 /* 가격 경고 아이콘 + 커스텀 툴팁 */
 .ct-metrics .ct-price-warn-icon {
   z-index: 999999;
-  color: #ff9500;
+  color: #ff3b30;
   cursor: help;
   font-size: 13px;
   margin-right: 4px;
@@ -137,9 +137,9 @@
   left: 0;
   right: 0;
   padding: 10px 12px;
-  background: rgba(120, 60, 0, 0.95);
-  border: 1px solid rgba(255, 149, 0, 0.5);
-  color: #ffd080;
+  background: rgba(100, 15, 15, 0.95);
+  border: 1px solid rgba(255, 59, 48, 0.55);
+  color: #ffb3b3;
   z-index: 999999;
   box-sizing: border-box;
   font-size: 12px;
@@ -155,7 +155,7 @@
   top: 100%;
   right: 48px;
   border: 7px solid transparent;
-  border-top-color: rgba(255, 149, 0, 0.5);
+  border-top-color: rgba(255, 59, 48, 0.55);
 }
 .ct-warn-tooltip::after {
   content: "";
@@ -163,7 +163,7 @@
   top: 100%;
   right: 49px;
   border: 6px solid transparent;
-  border-top-color: rgba(120, 60, 0, 0.95);
+  border-top-color: rgba(100, 15, 15, 0.95);
 }
 .ct-metrics .ct-price-warn-icon:hover .ct-warn-tooltip {
   display: block;
