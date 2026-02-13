@@ -1,6 +1,5 @@
 import { SELECTORS } from "@/modules/constants/selectors";
 import type { PriceValidationResult } from "@/types";
-import { calculateWeightedRevenue } from "@/modules/features/price-validation";
 
 /**
  * 헤더 다음에 인사 배너 주입
@@ -58,8 +57,6 @@ export function injectProductInfoAfterHeader(info: {
     return v.toLocaleString("ko-KR");
   };
 
-  const fmtPrice = (n: number) => n.toLocaleString("ko-KR") + "원";
-
   const el = document.createElement("div");
   el.className = "ct-prodinfo compact";
   const brand = info.brandName ?? "-";
@@ -71,11 +68,7 @@ export function injectProductInfoAfterHeader(info: {
   const hasWarning = pv_?.hasPriceDifference === true;
 
   const warningIcon = hasWarning
-    ? `<span class="ct-price-warn">⚠<span class="ct-warn-tooltip">옵션별 금액이 달라 정확한 매출 산출이 어렵습니다. 비율을 설정하여 매출을 추정할 수 있습니다.</span></span>`
-    : "";
-
-  const toggleBtn = hasWarning
-    ? `<button class="ct-option-toggle">옵션별 판매 비율 설정</button>`
+    ? `<span class="ct-price-warn">⚠<span class="ct-warn-tooltip">판매량은 옵션별로 제공되지 않고 상품 전체 합산 판매량만 제공됩니다. 옵션별 금액이 달라 정확한 매출 산출이 어렵습니다.</span></span>`
     : "";
 
   el.innerHTML = `
@@ -98,7 +91,6 @@ export function injectProductInfoAfterHeader(info: {
         <span class="kv"><span class="label">전환</span><span class="value chip rate">${rate}</span></span>
         <span class="kv"><span class="label">매출</span><span class="value chip sales ct-revenue-display">${totalSales}</span>${warningIcon}</span>
       </div>
-      ${toggleBtn}
       <div class="sub">최근 28일 기준</div>
     </div>`;
 
@@ -106,128 +98,7 @@ export function injectProductInfoAfterHeader(info: {
   if (first) first.insertAdjacentElement("afterend", el);
   else root.prepend(el);
 
-  // 다이얼로그 이벤트
-  if (hasWarning && pv_) {
-    const toggle = el.querySelector(".ct-option-toggle") as HTMLElement | null;
-    const mainRevenue = el.querySelector(".ct-revenue-display") as HTMLElement | null;
-    const salesNum = Number(info.salesLast28d) || 0;
-
-    if (toggle) {
-      toggle.onclick = () => {
-        // 기존 다이얼로그가 있으면 제거
-        const existing = document.querySelector(".ct-dialog-overlay");
-        if (existing) { existing.remove(); return; }
-
-        const optionRows = pv_!.options
-          .map((o, i) => {
-            const isLowest = o.salePrice === pv_!.lowestPrice;
-            const defaultWeight = isLowest ? 1 : 0;
-            const link = o.productUrl
-              ? `<a href="${o.productUrl}" target="_blank" class="ct-opt-link" onclick="event.stopPropagation()">링크</a>`
-              : "";
-            return `
-              <div class="ct-dialog-row">
-                <div class="ct-dialog-opt-info">
-                  <span class="ct-dialog-opt-name">${o.optionName || `옵션 ${i + 1}`}</span>
-                  <span class="ct-dialog-opt-price">${fmtPrice(o.salePrice)}${isLowest ? " (최저)" : ""}</span>
-                </div>
-                <div class="ct-dialog-opt-control">
-                  <input type="range" class="ct-opt-slider" min="0" max="1" step="0.01" value="${defaultWeight}" data-idx="${i}" data-price="${o.salePrice}">
-                  <span class="ct-opt-ratio" data-idx="${i}">${isLowest ? 100 : 0}%</span>
-                </div>
-                ${link}
-              </div>`;
-          })
-          .join("");
-
-        const overlay = document.createElement("div");
-        overlay.className = "ct-dialog-overlay";
-        overlay.innerHTML = `
-          <div class="ct-dialog" onclick="event.stopPropagation()">
-            <div class="ct-dialog-header">
-              <span>옵션별 판매 비율 설정</span>
-              <button class="ct-dialog-close">✕</button>
-            </div>
-            <div class="ct-dialog-desc">
-              옵션별 개별 판매량은 확인할 수 없고 합산된 판매량만 제공됩니다. 옵션별 금액이 다를 경우 정확한 매출 산출이 어려우므로, 예상 판매 비율을 설정하여 매출을 추정할 수 있습니다.
-            </div>
-            <div class="ct-dialog-body">${optionRows}</div>
-            <div class="ct-dialog-footer">
-              <span class="ct-dialog-revenue">매출: ${totalSales}</span>
-              <button class="ct-opt-reset-btn">초기화</button>
-            </div>
-          </div>`;
-
-        document.body.appendChild(overlay);
-
-        const closeDialog = () => overlay.remove();
-        overlay.addEventListener("click", closeDialog);
-        overlay.querySelector(".ct-dialog-close")!.addEventListener("click", closeDialog);
-
-        // 슬라이더 이벤트 (리스트 페이지와 동일한 정규화 방식)
-        const sliders = overlay.querySelectorAll<HTMLInputElement>(".ct-opt-slider");
-        const ratioEls = overlay.querySelectorAll<HTMLElement>(".ct-opt-ratio");
-        const revenueEl = overlay.querySelector(".ct-dialog-revenue") as HTMLElement | null;
-
-        const updateAll = () => {
-          const weights = Array.from(sliders).map((s) => Number(s.value));
-          const weightSum = weights.reduce((s, w) => s + w, 0);
-          const normalizedRatios = weights.map((w) => weightSum > 0 ? w / weightSum : 0);
-
-          // 비율 표시 업데이트
-          normalizedRatios.forEach((r, i) => {
-            if (ratioEls[i]) ratioEls[i].textContent = `${Math.round(r * 100)}%`;
-          });
-
-          // 매출 계산
-          const revenue = calculateWeightedRevenue(salesNum, pv_!.options, normalizedRatios);
-          const formatted = formatRevenue(revenue);
-          if (revenueEl) revenueEl.textContent = `매출: ${formatted}`;
-          if (mainRevenue) mainRevenue.textContent = formatted;
-        };
-
-        sliders.forEach((slider) => {
-          slider.addEventListener("input", (e) => {
-            e.stopPropagation();
-            updateAll();
-          });
-          slider.addEventListener("click", (e) => e.stopPropagation());
-          slider.addEventListener("mousedown", (e) => e.stopPropagation());
-          slider.addEventListener("pointerdown", (e) => e.stopPropagation());
-        });
-
-        // 초기화 버튼
-        overlay.querySelector(".ct-opt-reset-btn")!.addEventListener("click", (e) => {
-          e.stopPropagation();
-          sliders.forEach((s) => {
-            const price = Number(s.dataset.price ?? 0);
-            s.value = price === pv_!.lowestPrice ? "1" : "0";
-          });
-          updateAll();
-        });
-      };
-    }
-  }
-
   return true;
-}
-
-function formatRevenue(value: number): string {
-  if (value >= 100000000) {
-    return (
-      (value / 100000000)
-        .toLocaleString("ko-KR", { maximumFractionDigits: 1 })
-        .replace(/\.0$/, "") + "억"
-    );
-  }
-  if (value >= 10000) {
-    return (
-      (value / 10000)
-        .toLocaleString("ko-KR", { maximumFractionDigits: 1 })
-        .replace(/\.0$/, "") + "만"
-    );
-  }
-  return value.toLocaleString("ko-KR") + "원";
 }
 
 /**
