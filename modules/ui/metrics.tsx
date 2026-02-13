@@ -68,7 +68,7 @@ export function Complete({ p }: { p: ProductState }) {
             <span className="ct-price-warn-icon">
               ⚠
               <span className="ct-warn-tooltip">
-                판매량은 옵션별로 제공되지 않고 상품 전체 합산 판매량만 제공됩니다. 옵션별 금액이 달라 정확한 매출 산출이 어렵습니다.
+                판매량은 옵션 합산으로만 제공됩니다.<br />옵션별 금액이 달라 정확한 매출 산출이 어렵습니다.
               </span>
             </span>
           )}
