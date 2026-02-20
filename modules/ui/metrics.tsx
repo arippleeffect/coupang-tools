@@ -21,7 +21,7 @@ export function formatCurrencyKRW(value?: number): string {
 export function Loading() {
   return (
     <div className="wrap" onClick={(e) => { e.stopPropagation(); e.preventDefault(); }} onDragStart={(e) => e.preventDefault()} draggable={false}>
-      <div className="metric">
+      <div className="metric loading">
         <span className="spinner"></span>
         <span className="label">로딩중</span>
       </div>
