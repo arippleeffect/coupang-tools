@@ -67,9 +67,9 @@ export function injectProductInfoAfterHeader(info: {
   const pv_ = info.priceValidation;
   const hasWarning = pv_?.hasPriceDifference === true;
 
-  const warningIcon = hasWarning
-    ? `<span class="ct-price-warn">⚠<span class="ct-warn-tooltip">판매량은 옵션 합산으로만 제공됩니다.<br>옵션별 금액이 달라 정확한 매출 산출이 어렵습니다.</span></span>`
-    : "";
+  const revenueDisplay = hasWarning
+    ? `<span class="ct-price-warn"><span class="value ct-unknown-sales">정확한 매출가를 알 수 없음</span><span class="ct-warn-tooltip">옵션별 판매가가 상이하여 정확한 매출 금액 산출이 불가능함<br>판매량 지표를 참고하여 매출 규모를 유추할 수 있음</span></span>`
+    : `<span class="value chip sales ct-revenue-display">${totalSales}</span>`;
 
   el.innerHTML = `
     <div class="wrap">
@@ -85,11 +85,11 @@ export function injectProductInfoAfterHeader(info: {
         <span class="kv"><span class="label">조회</span><span class="value chip pv">${fmtInt(
           pv,
         )}</span></span>
-        <span class="kv"><span class="label">판매</span><span class="value chip sales">${fmtInt(
+        <span class="kv"><span class="label">판매<span class="ct-info-icon">&#9432;<span class="ct-info-tooltip">해당 판매량은 옵션별 판매량이 아닌<br>전체 옵션을 합산한 총 판매량임</span></span></span><span class="value chip sales">${fmtInt(
           sales,
         )}</span></span>
         <span class="kv"><span class="label">전환</span><span class="value chip rate">${rate}</span></span>
-        <span class="kv"><span class="label">매출</span><span class="value chip sales ct-revenue-display">${totalSales}</span>${warningIcon}</span>
+        <span class="kv"><span class="label">매출</span>${revenueDisplay}</span>
       </div>
       <div class="sub">최근 28일 기준</div>
     </div>`;
@@ -254,7 +254,7 @@ export function injectLoginRequiredProductInfo(): boolean {
       <div class="line" style="justify-content:center;">
         <span class="kv">
           <span class="label">쿠팡윙 로그인이 필요합니다</span>
-          <button class="login-btn" style="margin-left:12px;background:#1a73e8;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">
+          <button class="login-btn" style="margin-left:12px;background:#10b981;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">
             쿠팡윙 로그인 →
           </button>
         </span>

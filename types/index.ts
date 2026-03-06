@@ -8,6 +8,7 @@ export enum MESSAGE_TYPE {
   LICENSE_ACTIVATE = "LICENSE_ACTIVATE",
   LICENSE_DEACTIVATE = "LICENSE_DEACTIVATE",
   LICENSE_VALIDATE = "LICENSE_VALIDATE",
+  LICENSE_INVALID = "LICENSE_INVALID",
 }
 
 export type GetProductMetricsMsg = {
@@ -67,22 +68,6 @@ export type MessageResponse<T> = {
 
 type ProductStatus = "LOADING" | "COMPLETE" | "FAIL" | "EMPTY";
 export type ProductType = "NORMAL" | "AD";
-export type OptionPriceInfo = {
-  itemId: number;
-  vendorItemId: number;
-  salePrice: number;
-  productUrl: string;
-  optionName?: string;
-};
-
-export type PriceValidationResult = {
-  hasPriceDifference: boolean;
-  options: OptionPriceInfo[];
-  lowestPrice: number;
-  lowestItemId: number;
-  apiPrice: number;
-};
-
 export type QuantityInfoPrice = {
   salePrice: string;
   i18nSalePrice?: { amount: string };
@@ -121,7 +106,6 @@ export type QuantityInfoDetailItem = {
   stockInfo?: {
     soldOut?: boolean;
   };
-  // fallback: top-level fields (일부 응답에서 itemBasicInfo 없이 제공)
   itemId?: number;
   vendorItemId?: number;
   productUrl?: string;
@@ -137,6 +121,22 @@ export type QuantityInfoResponse = {
   }[];
 };
 
+export type OptionPriceInfo = {
+  itemId: number;
+  vendorItemId: number;
+  salePrice: number;
+  productUrl: string;
+  optionName?: string;
+};
+
+export type PriceValidationResult = {
+  hasPriceDifference: boolean;
+  options: OptionPriceInfo[];
+  lowestPrice: number;
+  lowestItemId: number;
+  apiPrice: number;
+};
+
 type ProductData = {
   brandName: string;
   pv: number;
@@ -149,7 +149,7 @@ export type ProductState = {
   dataId: string;
   productName: string;
   productId: string;
-  itemId: string;
+  itemId?: string;
   vendorItemId?: string;
   status: ProductStatus;
   type: ProductType;
@@ -184,7 +184,7 @@ export type CoupangProduct = {
   attributeTypes: string | null;
 };
 
-export type LicenseStatus = "ACTIVE" | "INACTIVE" | "EXPIRED" | "INVALID";
+export type LicenseStatus = "ACTIVE" | "INACTIVE" | "EXPIRED" | "INVALID" | "SUSPENDED";
 
 export type LicenseInfo = {
   email: string;
@@ -196,6 +196,8 @@ export type LicenseInfo = {
 export type LicenseActivateRequest = {
   email: string;
   licenseKey: string;
+  deviceId: string;
+  confirm?: boolean;
 };
 
 export type LicenseActivateResponse = {
@@ -203,14 +205,29 @@ export type LicenseActivateResponse = {
   license?: LicenseInfo;
   message?: string;
   error?: string;
+  deviceChangeCount?: number;
+  maxAllowed?: number;
+  warning?: {
+    type: string;
+    message: string;
+    deviceChangeCount: number;
+    maxAllowed: number;
+  };
 };
 
 export type LicenseDeactivateRequest = {
   activationToken: string;
+  deviceId: string;
 };
 
 export type LicenseDeactivateResponse = {
   ok: boolean;
   message?: string;
   error?: string;
+};
+
+export type LicenseCheckResult = {
+  valid: boolean;
+  reason?: "SUSPENDED" | "INACTIVE" | "DEVICE_MISMATCH" | "NOT_FOUND" | "INVALID_REQUEST" | "INTERNAL_ERROR";
+  message?: string;
 };

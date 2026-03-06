@@ -24,6 +24,7 @@
 }
 
 .ct-metrics .metric {
+  position: relative;
   display: flex;
   gap: 8px;
   justify-content: space-between;
@@ -79,7 +80,7 @@
   pointer-events: auto;
   position: relative;
   z-index: 10;
-  background: #2b6eff;
+  background: #10b981;
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -90,7 +91,7 @@
 }
 
 .ct-metrics .retry-btn:hover {
-  background: #1f54c7;
+  background: #059669;
 }
 
 .ct-metrics .loading {
@@ -123,6 +124,7 @@
 
 /* 가격 경고 아이콘 + 커스텀 툴팁 */
 .ct-metrics .ct-price-warn-icon {
+  position: relative;
   z-index: 999999;
   color: #ff3b30;
   cursor: help;
@@ -133,9 +135,10 @@
 .ct-warn-tooltip {
   display: none;
   position: absolute;
-  bottom: 78px;
-  left: 0;
-  right: 0;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 200px;
   padding: 10px 12px;
   background: rgba(100, 15, 15, 0.95);
   border: 1px solid rgba(255, 59, 48, 0.55);
@@ -153,7 +156,8 @@
   content: "";
   position: absolute;
   top: 100%;
-  right: 48px;
+  left: 50%;
+  transform: translateX(-50%);
   border: 7px solid transparent;
   border-top-color: rgba(255, 59, 48, 0.55);
 }
@@ -161,13 +165,30 @@
   content: "";
   position: absolute;
   top: 100%;
-  right: 49px;
+  left: 50%;
+  transform: translateX(-50%);
   border: 6px solid transparent;
   border-top-color: rgba(100, 15, 15, 0.95);
 }
 .ct-metrics .ct-price-warn-icon:hover .ct-warn-tooltip {
   display: block;
 }
+
+/* 매출 알 수 없음 텍스트 */
+.ct-unknown-sales { font-size: 11px; font-weight: 500; opacity: 0.7; white-space: nowrap; }
+
+/* 정보 아이콘 */
+.ct-info-icon { color: rgba(255,255,255,.5); cursor: help; font-size: 12px; margin-left: 3px; pointer-events: auto; }
+
+/* 정보 툴팁 (중립적 다크 스타일) - .wrap 기준 중앙 배치 */
+.ct-info-tooltip { display: none; position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; padding: 8px 10px; background: rgba(30,30,40,.95); border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.85); z-index: 999999; font-size: 11px; font-weight: 500; line-height: 1.5; white-space: normal; border-radius: 8px; pointer-events: none; }
+
+/* 화살표 */
+.ct-info-tooltip::before { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: rgba(255,255,255,.2); }
+.ct-info-tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: rgba(30,30,40,.95); }
+
+/* 호버 트리거 */
+.ct-info-icon:hover .ct-info-tooltip { display: block; }
 
 @media (prefers-color-scheme: light) {
   .ct-metrics .wrap {

@@ -17,7 +17,7 @@ export default function Banner({
         right: 0,
         zIndex: 2147483647,
         padding: "6px 2px",
-        background: "rgba(43,110,255)",
+        background: "rgba(16,185,129)",
         color: "#fff",
         fontWeight: 600,
         fontSize: "13px",
@@ -34,7 +34,7 @@ export default function Banner({
         style={{
           marginLeft: "auto",
           background: "#fff",
-          color: "#2b6eff",
+          color: "#10b981",
           border: "none",
           borderRadius: "4px",
           padding: "4px 8px",

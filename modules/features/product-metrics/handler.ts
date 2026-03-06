@@ -42,15 +42,11 @@ async function runPriceValidation(
 
     const current = store.findProduct(product.dataId);
     if (priceValidation?.hasPriceDifference && current?.data) {
-      const lowestTotalSales = calculateTotalSales(
-        sales,
-        priceValidation.lowestPrice,
-      );
       store.updateProduct({
         ...current,
         data: {
           ...current.data,
-          totalSales: lowestTotalSales,
+          totalSales: undefined,
           priceValidation,
         },
       });
@@ -68,7 +64,7 @@ async function runPriceValidation(
  */
 export async function handleViewProductMetrics(
   store: ProductStore,
-  renderErrorToast: (ctx: any, message: string, code?: string) => void,
+  renderErrorToast: (ctx: any, message: string, code?: string) => Promise<void>,
   ctx: any,
 ) {
   try {
@@ -194,7 +190,7 @@ export async function handleViewProductMetrics(
       return;
     }
 
-    renderErrorToast(ctx, error.message ?? error.error, error.code);
+    await renderErrorToast(ctx, error.message ?? error.error, error.code);
   }
 }
 
@@ -207,7 +203,7 @@ export async function handleViewProductMetrics(
  */
 function createRetryHandler(
   store: ProductStore,
-  renderErrorToast: (ctx: any, message: string, code?: string) => void,
+  renderErrorToast: (ctx: any, message: string, code?: string) => Promise<void>,
   ctx: any,
 ) {
   return async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -251,7 +247,7 @@ function createRetryHandler(
       } else {
         store.updateProduct({ ...product, status: "FAIL" });
         if (!isLoginRequiredError(error)) {
-          renderErrorToast(ctx, error.message ?? error.error, error.code);
+          await renderErrorToast(ctx, error.message ?? error.error, error.code);
         }
       }
     }

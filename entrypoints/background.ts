@@ -7,27 +7,46 @@ import {
   PreMatchingSearchResponse,
   LicenseActivateResponse,
   LicenseInfo,
+  LicenseCheckResult,
 } from "@/types";
 import {
   isLicenseValid,
   getLicense,
   removeLicense,
+  saveLicense,
 } from "@/modules/core/license-storage";
 import { activateLicense, deactivateLicense } from "@/modules/api/license";
+import { getOrCreateDeviceId } from "@/modules/core/device-id";
 
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const VALIDATION_CACHE_DURATION = 6 * 60 * 60 * 1000; // 6시간
 
-// Background에서 메모리 캐시 관리 (content script에서 조작 불가)
-let lastValidationTime = 0;
-let lastValidationResult = false;
+// 7일 캐시 (일주일에 한 번 서버 검증)
+const VALIDATION_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+const VALIDATION_CACHE_KEY = "ct_license_validation_cache";
+
+async function loadCachedValidation(): Promise<{ result: LicenseCheckResult; timestamp: number } | null> {
+  const data = await browser.storage.local.get(VALIDATION_CACHE_KEY);
+  return data[VALIDATION_CACHE_KEY] ?? null;
+}
+
+async function saveCachedValidation(result: LicenseCheckResult): Promise<void> {
+  await browser.storage.local.set({
+    [VALIDATION_CACHE_KEY]: { result, timestamp: Date.now() },
+  });
+}
+
+async function invalidateValidationCache(): Promise<void> {
+  await browser.storage.local.remove(VALIDATION_CACHE_KEY);
+}
 
 /**
  * 라이선스 검증 API 호출
  */
-async function callValidationAPI(license: LicenseInfo): Promise<boolean> {
+async function callValidationAPI(license: LicenseInfo): Promise<LicenseCheckResult> {
   try {
+    const deviceId = await getOrCreateDeviceId();
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/license-check`, {
       method: "POST",
       headers: {
@@ -37,64 +56,49 @@ async function callValidationAPI(license: LicenseInfo): Promise<boolean> {
       },
       body: JSON.stringify({
         activationToken: license.activationToken,
+        deviceId,
       }),
     });
 
-    if (!response.ok) {
-      console.error("[License Validator] API request failed:", response.status);
-      return false;
-    }
-
-    const data: { valid: boolean } = await response.json();
-    return data.valid || false;
+    const data: LicenseCheckResult = await response.json();
+    return data;
   } catch (error) {
     console.error("[License Validator] API error:", error);
-    return false;
+    return { valid: false, reason: "INTERNAL_ERROR", message: "네트워크 오류" };
   }
 }
 
 /**
- * 라이선스 검증 (캐시 사용)
+ * 라이선스 검증 (7일 캐시로 주 1회 서버 검증)
  */
-async function validateLicenseOnAction(): Promise<boolean> {
-  const now = Date.now();
-
-  if (now - lastValidationTime < VALIDATION_CACHE_DURATION) {
-    return lastValidationResult;
+async function validateLicenseOnAction(): Promise<LicenseCheckResult> {
+  // 7일 이내 캐시가 있으면 반환
+  const cached = await loadCachedValidation();
+  if (cached && Date.now() - cached.timestamp < VALIDATION_CACHE_TTL) {
+    return cached.result;
   }
 
   try {
     const license = await getLicense();
 
     if (!license) {
-      lastValidationTime = now;
-      lastValidationResult = false;
-      return false;
+      return { valid: false, reason: "NOT_FOUND" };
     }
 
-    const isValid = await callValidationAPI(license);
+    const result = await callValidationAPI(license);
 
-    if (!isValid) {
-      console.warn("[License Validator] Validation failed, removing license");
-      await removeLicense();
+    if (!result.valid) {
+      if (result.reason === "DEVICE_MISMATCH" || result.reason === "SUSPENDED") {
+        await removeLicense();
+      }
     }
 
-    lastValidationTime = now;
-    lastValidationResult = isValid;
-
-    return isValid;
+    await saveCachedValidation(result);
+    return result;
   } catch (error) {
     console.error("[License Validator] Error:", error);
-    return false;
+    return { valid: false, reason: "INTERNAL_ERROR" };
   }
-}
-
-/**
- * 캐시 무효화
- */
-function invalidateValidationCache(): void {
-  lastValidationTime = 0;
-  lastValidationResult = false;
 }
 
 export default defineBackground(() => {
@@ -110,7 +114,6 @@ export default defineBackground(() => {
   // Re-initialize context menus when license status changes
   browser.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === "local" && changes.ct_license) {
-      // Just update menus, validation will happen periodically or on action
       await initializeContextMenus();
     }
   });
@@ -131,6 +134,7 @@ export default defineBackground(() => {
       return;
     }
 
+    // Has license - show all menus
     browser.contextMenus.create({
       id: MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL,
       title: "로켓그로스 반출 액셀 다운로드",
@@ -160,11 +164,20 @@ export default defineBackground(() => {
     }
 
     if (info.menuItemId === MESSAGE_TYPE.VIEW_PRODUCT_METRICS) {
-      // Validate license before processing
-      const isValid = await validateLicenseOnAction();
-      if (!isValid) {
-        console.warn("[bg] License validation failed for VIEW_PRODUCT_METRICS");
-        // Re-initialize context menus to show activation menu
+      const result = await validateLicenseOnAction();
+      if (!result.valid) {
+        console.warn("[bg] License validation failed:", result.reason);
+
+        try {
+          await browser.tabs.sendMessage(tab.id, {
+            type: MESSAGE_TYPE.LICENSE_INVALID,
+            reason: result.reason,
+            message: result.message,
+          });
+        } catch {
+          // tab이 닫혔거나 content script가 없는 경우 무시
+        }
+
         await initializeContextMenus();
         return;
       }
@@ -187,7 +200,6 @@ export default defineBackground(() => {
 
         await browser.tabs.sendMessage(tab.id, message);
       } catch (err: any) {
-        // Ignore "Receiving end does not exist" errors (tab closed/reloaded)
         if (!err.message?.includes("Receiving end does not exist")) {
           console.error("[bg] failed to send message", err);
         }
@@ -195,13 +207,20 @@ export default defineBackground(() => {
     }
 
     if (info.menuItemId === MESSAGE_TYPE.ROCKETGROSS_EXPORT_EXCEL) {
-      // Validate license before processing
-      const isValid = await validateLicenseOnAction();
-      if (!isValid) {
-        console.warn(
-          "[bg] License validation failed for ROCKETGROSS_EXPORT_EXCEL"
-        );
-        // Re-initialize context menus to show activation menu
+      const result = await validateLicenseOnAction();
+      if (!result.valid) {
+        console.warn("[bg] License validation failed for ROCKETGROSS_EXPORT_EXCEL:", result.reason);
+
+        try {
+          await browser.tabs.sendMessage(tab.id, {
+            type: MESSAGE_TYPE.LICENSE_INVALID,
+            reason: result.reason,
+            message: result.message,
+          });
+        } catch {
+          // tab이 닫혔거나 content script가 없는 경우 무시
+        }
+
         await initializeContextMenus();
         return;
       }
@@ -214,7 +233,6 @@ export default defineBackground(() => {
       try {
         await browser.tabs.sendMessage(tab.id, message);
       } catch (err: any) {
-        // Ignore "Receiving end does not exist" errors (tab closed/reloaded)
         if (!err.message?.includes("Receiving end does not exist")) {
           console.error("[bg] failed to send message", err);
         }
@@ -235,6 +253,7 @@ export default defineBackground(() => {
             type: MESSAGE_TYPE.LICENSE_ACTIVATE;
             email: string;
             licenseKey: string;
+            confirm?: boolean;
           }
         | { type: MESSAGE_TYPE.LICENSE_DEACTIVATE }
         | { type: MESSAGE_TYPE.LICENSE_VALIDATE },
@@ -262,19 +281,25 @@ export default defineBackground(() => {
         }
 
         if (msg.type === MESSAGE_TYPE.LICENSE_ACTIVATE) {
-          const { email, licenseKey } = msg as {
+          const { email, licenseKey, confirm: confirmed } = msg as {
             type: MESSAGE_TYPE.LICENSE_ACTIVATE;
             email: string;
             licenseKey: string;
+            confirm?: boolean;
           };
+
+          const deviceId = await getOrCreateDeviceId();
+
           const response = await activateLicense({
             email,
             licenseKey,
+            deviceId,
+            confirm: confirmed,
           });
 
-          // Invalidate cache after activation
-          if (response.ok) {
-            invalidateValidationCache();
+          if (response.ok && response.license) {
+            await saveLicense(response.license);
+            await invalidateValidationCache();
           }
 
           sendResponse(response);
@@ -283,13 +308,15 @@ export default defineBackground(() => {
         if (msg.type === MESSAGE_TYPE.LICENSE_DEACTIVATE) {
           const license = await getLicense();
           if (license) {
+            const deviceId = await getOrCreateDeviceId();
             const response = await deactivateLicense({
               activationToken: license.activationToken,
+              deviceId,
             });
 
-            // Invalidate cache after deactivation
             if (response.ok) {
-              invalidateValidationCache();
+              await removeLicense();
+              await invalidateValidationCache();
             }
 
             sendResponse({ ok: response.ok, message: response.message });
@@ -299,8 +326,8 @@ export default defineBackground(() => {
         }
 
         if (msg.type === MESSAGE_TYPE.LICENSE_VALIDATE) {
-          const isValid = await validateLicenseOnAction();
-          sendResponse({ ok: isValid });
+          const result = await validateLicenseOnAction();
+          sendResponse({ ok: result.valid, reason: result.reason, message: result.message } as any);
         }
       })();
 
@@ -314,7 +341,6 @@ export default defineBackground(() => {
         type: MESSAGE_TYPE.EXCEL_DOWNLOAD_BANNER_INIT,
       })
       .catch((err: any) => {
-        // Ignore "Receiving end does not exist" errors (tab closed/reloaded)
         if (!err.message?.includes("Receiving end does not exist")) {
           console.error("[bg] failed to send navigation message", err);
         }
@@ -357,9 +383,6 @@ const searchProductByKeyword = async (keyword: string | number) => {
     };
   }
   try {
-    const tokne2 = await browser.cookies.getAll({
-      url: "https://wing.coupang.com",
-    });
     const token = await browser.cookies.get({
       name: COUPANG_COOKIE_KEY.XSRF_TOKEN,
       url: "https://wing.coupang.com",
@@ -408,7 +431,6 @@ async function fetchPreMatchingSearch<T>({
       credentials: "include",
       body: JSON.stringify({
         keyword: String(keyword),
-        // TODO: 사용하는거 한번 확인
         excludedProductIds: [],
         searchPage: 0,
         searchOrder: "DEFAULT",

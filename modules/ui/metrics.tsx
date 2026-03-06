@@ -52,7 +52,15 @@ export function Complete({ p }: { p: ProductState }) {
         <span className="value chip pv">{p.data?.pv.toLocaleString()}</span>
       </div>
       <div className="metric">
-        <span className="label">판매량</span>
+        <span className="label">
+          판매량
+          <span className="ct-info-icon">
+            &#9432;
+            <span className="ct-info-tooltip">
+              해당 판매량은 옵션별 판매량이 아닌<br />전체 옵션을 합산한 총 판매량임
+            </span>
+          </span>
+        </span>
         <span className="value chip sales">
           {p.data?.sales.toLocaleString()}
         </span>
@@ -64,17 +72,20 @@ export function Complete({ p }: { p: ProductState }) {
       <div className="metric">
         <span className="label">매출</span>
         <span className="ct-metric-value-group">
-          {hasWarning && (
+          {hasWarning ? (
             <span className="ct-price-warn-icon">
-              ⚠
+              &#9888;
+              <span className="value ct-unknown-sales">정확한 매출가를 알 수 없음</span>
               <span className="ct-warn-tooltip">
-                판매량은 옵션 합산으로만 제공됩니다.<br />옵션별 금액이 달라 정확한 매출 산출이 어렵습니다.
+                옵션별 판매가가 상이하여 정확한 매출 금액 산출이 불가능함<br />
+                판매량 지표를 참고하여 매출 규모를 유추할 수 있음
               </span>
             </span>
+          ) : (
+            <span className="value chip sales">
+              {formatCurrencyKRW(p.data?.totalSales)}
+            </span>
           )}
-          <span className="value chip sales">
-            {formatCurrencyKRW(p.data?.totalSales)}
-          </span>
         </span>
       </div>
     </div>

@@ -10,27 +10,25 @@ export function exportProductsToExcel(products: ProductState[]) {
     .filter((p) => p.status === "COMPLETE")
     .filter((p) => p.type === "NORMAL")
     .map((p) => ({
-      productId: p.productId,
-      productName: p.productName,
-      status: p.status,
-      brandName: p.data?.brandName ?? "",
-      pv: p.data?.pv ?? "",
-      sales: p.data?.sales ?? "",
-      totalSales: p.data?.totalSales,
-      rate: p.data?.rate ?? "",
+      노출상품ID: p.productId,
+      상품명: p.productName,
+      브랜드: p.data?.brandName ?? "",
+      조회수: p.data?.pv ?? "",
+      판매량: p.data?.sales ?? "",
+      매출: p.data?.totalSales,
+      전환율: p.data?.rate ?? "",
     }));
 
   const adRows = products
     .filter((p) => p.status === "COMPLETE")
     .filter((p) => p.type === "AD")
     .map((p) => ({
-      productId: p.productId,
-      productName: p.productName,
-      status: p.status,
-      brandName: p.data?.brandName ?? "",
-      pv: p.data?.pv ?? "",
-      sales: p.data?.sales ?? "",
-      rate: p.data?.rate ?? "",
+      노출상품ID: p.productId,
+      상품명: p.productName,
+      브랜드: p.data?.brandName ?? "",
+      조회수: p.data?.pv ?? "",
+      판매량: p.data?.sales ?? "",
+      전환율: p.data?.rate ?? "",
     }));
 
   const wb = XLSX.utils.book_new();

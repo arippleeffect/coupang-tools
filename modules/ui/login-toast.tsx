@@ -29,7 +29,7 @@ export function LoginToast({ onOpenLogin }: { onOpenLogin: () => void }) {
           bottom: '20px',
           right: '20px',
           zIndex: 2147483647,
-          background: '#1a73e8',
+          background: '#10b981',
           color: '#fff',
           padding: '16px 20px',
           borderRadius: '12px',
@@ -59,7 +59,7 @@ export function LoginToast({ onOpenLogin }: { onOpenLogin: () => void }) {
           onClick={onOpenLogin}
           style={{
             background: '#fff',
-            color: '#1a73e8',
+            color: '#10b981',
             border: 'none',
             borderRadius: '6px',
             padding: '8px 16px',
