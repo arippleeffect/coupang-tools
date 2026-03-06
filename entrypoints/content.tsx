@@ -29,6 +29,18 @@ export default defineContentScript({
       updateBanner(ctx, state);
     });
     browser.runtime.onMessage.addListener(async (msg) => {
+      // 라이선스 무효 메시지 처리
+      if (msg.type === MESSAGE_TYPE.LICENSE_INVALID) {
+        if (msg.reason === "SUSPENDED") {
+          renderErrorToast(ctx, "라이선스가 일시 중지되었습니다. 고객센터에 문의해주세요.", "LICENSE_SUSPENDED");
+        } else if (msg.reason === "DEVICE_MISMATCH") {
+          renderErrorToast(ctx, "다른 기기에서 라이선스가 활성화되어 있습니다. 다시 활성화해주세요.", "DEVICE_MISMATCH");
+        } else {
+          renderErrorToast(ctx, "라이선스 활성화가 필요합니다.", "LICENSE_REQUIRED");
+        }
+        return;
+      }
+
       if (msg.type !== MESSAGE_TYPE.EXCEL_DOWNLOAD_BANNER_INIT && !msg.token) {
         showLoginToast();
         return;

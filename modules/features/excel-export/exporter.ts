@@ -10,27 +10,25 @@ export function exportProductsToExcel(products: ProductState[]) {
     .filter((p) => p.status === "COMPLETE")
     .filter((p) => p.type === "NORMAL")
     .map((p) => ({
-      productId: p.productId,
-      productName: p.productName,
-      status: p.status,
-      brandName: p.data?.brandName ?? "",
-      pv: p.data?.pv ?? "",
-      sales: p.data?.sales ?? "",
-      totalSales: p.data?.totalSales,
-      rate: p.data?.rate ?? "",
+      노출상품ID: p.productId,
+      상품명: p.productName,
+      브랜드: p.data?.brandName ?? "",
+      조회수: p.data?.pv ?? "",
+      판매량: p.data?.sales ?? "",
+      매출: p.data?.totalSales,
+      전환율: p.data?.rate ?? "",
     }));
 
   const adRows = products
     .filter((p) => p.status === "COMPLETE")
     .filter((p) => p.type === "AD")
     .map((p) => ({
-      productId: p.productId,
-      productName: p.productName,
-      status: p.status,
-      brandName: p.data?.brandName ?? "",
-      pv: p.data?.pv ?? "",
-      sales: p.data?.sales ?? "",
-      rate: p.data?.rate ?? "",
+      노출상품ID: p.productId,
+      상품명: p.productName,
+      브랜드: p.data?.brandName ?? "",
+      조회수: p.data?.pv ?? "",
+      판매량: p.data?.sales ?? "",
+      전환율: p.data?.rate ?? "",
     }));
 
   const wb = XLSX.utils.book_new();
@@ -50,98 +48,6 @@ export function exportProductsToExcel(products: ProductState[]) {
   }
 
   downloadWorkbook(wb, "products");
-}
-
-/**
- * 반출 아이템을 Excel 파일로 내보내기
- * @param items - 아이템 배열
- */
-export function exportVendorReturnToExcel(items: any[]) {
-  const rows: any[] = [];
-  const safe = (v: any) => (v == null ? "" : String(v));
-
-  for (const it of items) {
-    const fcMap = it?.returnableQtyByFCTotal || {};
-    const entries = Object.entries(fcMap) as [string, any][];
-
-    if (entries.length === 0) {
-      rows.push({
-        vendorItemId: safe(it.vendorItemId),
-        vendorInventoryId: safe(it.vendorInventoryId),
-        vendorInventoryName: safe(it.vendorInventoryName),
-        vendorInventoryItemName: safe(it.vendorInventoryItemName),
-        vendorId: safe(it.vendorId),
-        skuId: safe(it.skuId),
-        productId: safe(it.productId),
-        imageUrl: safe(
-          it.imageUrl ||
-            (it.mainImageEndPoint
-              ? `https://image1.coupangcdn.com/image/${it.mainImageEndPoint}`
-              : "")
-        ),
-        fcCode: "",
-        fcName: "",
-        qty: "",
-        returnableQtyTotal: safe(it.returnableQtyTotal),
-      });
-    } else {
-      for (const [fcCode, v] of entries) {
-        const qty = v?.qty ?? "";
-        const fcName = v?.fcName ?? "";
-        rows.push({
-          vendorItemId: safe(it.vendorItemId),
-          vendorInventoryId: safe(it.vendorInventoryId),
-          vendorInventoryName: safe(it.vendorInventoryName),
-          vendorInventoryItemName: safe(it.vendorInventoryItemName),
-          vendorId: safe(it.vendorId),
-          skuId: safe(it.skuId),
-          productId: safe(it.productId),
-          imageUrl: safe(
-            it.imageUrl ||
-              (it.mainImageEndPoint
-                ? `https://image1.coupangcdn.com/image/${it.mainImageEndPoint}`
-                : "")
-          ),
-          fcCode: safe(fcCode),
-          fcName: safe(fcName),
-          qty: safe(qty),
-          returnableQtyTotal: safe(it.returnableQtyTotal),
-        });
-      }
-    }
-  }
-
-  const headers = [
-    "vendorItemId",
-    "vendorInventoryId",
-    "vendorInventoryName",
-    "vendorInventoryItemName",
-    "vendorId",
-    "skuId",
-    "productId",
-    "imageUrl",
-    "fcCode",
-    "fcName",
-    "qty",
-    "returnableQtyTotal",
-  ];
-
-  const ws = XLSX.utils.json_to_sheet(rows, { header: headers });
-  const colWidths = headers.map((h) => ({
-    wch: Math.min(
-      60,
-      Math.max(
-        String(h).length + 2,
-        ...rows.map((r) => String((r as any)[h] ?? "").length + 2)
-      )
-    ),
-  }));
-  (ws as any)["!cols"] = colWidths;
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "반출목록");
-
-  downloadWorkbook(wb, "vendor-return");
 }
 
 /**

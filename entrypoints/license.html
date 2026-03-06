@@ -351,8 +351,6 @@
       .dialog-icon svg {
         width: 32px;
         height: 32px;
-        stroke: hsl(142 71% 45%);
-        stroke-width: 2.5;
         fill: none;
       }
 
@@ -519,7 +517,7 @@
     <div id="successDialog" class="dialog-overlay hidden">
       <div class="dialog">
         <div class="dialog-icon">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#2e7d32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         </div>
@@ -538,24 +536,75 @@
       </div>
     </div>
 
+    <!-- 기기 변경 확인 다이얼로그 -->
+    <div id="confirmDialog" class="dialog-overlay hidden">
+      <div class="dialog">
+        <div class="dialog-icon" style="background: #fde8e8">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#d32f2f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+            <line x1="12" x2="12" y1="9" y2="13"/>
+            <line x1="12" x2="12.01" y1="17" y2="17"/>
+          </svg>
+        </div>
+
+        <h2>기기 변경 확인</h2>
+        <p id="confirmMessage"></p>
+        <p style="font-size: 13px; color: hsl(0 0% 45%); margin-top: 8px; line-height: 1.5; background: hsl(0 0% 96%); padding: 12px; border-radius: 6px; text-align: left;">
+          올바른 기기 변경 방법: 기존 기기에서 먼저 <strong>라이선스 비활성화</strong> 후 새 기기에서 활성화하면 변경 횟수가 차감되지 않습니다.<br/><br/>
+          비정상적인 기기 변경이 계속될 경우 <strong style="color: hsl(0 74% 42%);">라이선스가 영구 정지</strong>될 수 있습니다.
+        </p>
+
+        <div class="dialog-actions">
+          <button type="button" class="btn-close" id="confirmCancelBtn">
+            취소
+          </button>
+          <button type="button" class="btn-coupang" id="confirmProceedBtn">
+            계속 활성화
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 기기 변경 경고 다이얼로그 (활성화 후 경고) -->
+    <div id="warningDialog" class="dialog-overlay hidden">
+      <div class="dialog">
+        <div class="dialog-icon" style="background: #fde8e8">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#d32f2f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+            <line x1="12" x2="12" y1="9" y2="13"/>
+            <line x1="12" x2="12.01" y1="17" y2="17"/>
+          </svg>
+        </div>
+
+        <h2>기기 변경 경고</h2>
+        <p id="warningMessage"></p>
+
+        <div class="dialog-actions">
+          <button type="button" class="btn-close" id="warningCloseBtn">
+            확인
+          </button>
+          <button type="button" class="btn-coupang" id="warningCoupangBtn">
+            쿠팡으로 이동하기
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script type="module">
-      async function activateLicense(email, licenseKey) {
+      async function activateLicense(email, licenseKey, confirm = false) {
         return new Promise((resolve) => {
           chrome.runtime.sendMessage(
             {
               type: "LICENSE_ACTIVATE",
               email,
               licenseKey,
+              confirm,
             },
             (response) => {
               resolve(response);
             },
           );
         });
-      }
-
-      async function saveLicense(license) {
-        await chrome.storage.local.set({ ct_license: license });
       }
 
       const licenseForm = document.getElementById("licenseForm");
@@ -565,10 +614,16 @@
       const cancelBtn = document.getElementById("cancelBtn");
       const alertContainer = document.getElementById("alertContainer");
 
+      function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
       function showAlert(message, type = "info") {
         alertContainer.innerHTML = `
-        <div class="alert alert-${type}">
-          ${message}
+        <div class="alert alert-${escapeHtml(type)}">
+          ${escapeHtml(message)}
         </div>
       `;
       }
@@ -577,32 +632,32 @@
         alertContainer.innerHTML = "";
       }
 
-      licenseForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        clearAlert();
-
-        const email = emailInput.value.trim();
-        const licenseKey = licenseKeyInput.value.trim();
-
-        if (!email || !licenseKey) {
-          showAlert("이메일과 라이선스 키를 모두 입력해주세요.", "error");
-          return;
-        }
-
+      // 활성화 실행 함수 (confirm 파라미터 지원)
+      async function doActivate(email, licenseKey, confirm = false) {
         activateBtn.disabled = true;
         activateBtn.innerHTML = '<span class="spinner"></span>활성화 중...';
 
         try {
-          const response = await activateLicense(email, licenseKey);
+          const response = await activateLicense(email, licenseKey, confirm);
+
+          // 기기 변경 확인 필요 → 확인 다이얼로그 표시
+          if (!response.ok && response.error === "DEVICE_CHANGE_CONFIRM") {
+            document.getElementById("confirmMessage").textContent = response.message;
+            document.getElementById("confirmDialog").classList.remove("hidden");
+            return;
+          }
 
           if (response.ok && response.license) {
-            await saveLicense(response.license);
-
             emailInput.value = "";
             licenseKeyInput.value = "";
 
-            // 성공 다이얼로그 표시
-            document.getElementById("successDialog").classList.remove("hidden");
+            // warning이 있으면 경고 다이얼로그, 없으면 성공 다이얼로그
+            if (response.warning) {
+              document.getElementById("warningMessage").textContent = response.warning.message;
+              document.getElementById("warningDialog").classList.remove("hidden");
+            } else {
+              document.getElementById("successDialog").classList.remove("hidden");
+            }
           } else {
             showAlert(
               response.message ||
@@ -617,6 +672,21 @@
           activateBtn.disabled = false;
           activateBtn.innerHTML = "라이선스 활성화";
         }
+      }
+
+      licenseForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearAlert();
+
+        const email = emailInput.value.trim();
+        const licenseKey = licenseKeyInput.value.trim();
+
+        if (!email || !licenseKey) {
+          showAlert("이메일과 라이선스 키를 모두 입력해주세요.", "error");
+          return;
+        }
+
+        await doActivate(email, licenseKey, false);
       });
 
       cancelBtn.addEventListener("click", () => {
@@ -635,6 +705,37 @@
       document
         .getElementById("closeDialogBtn")
         ?.addEventListener("click", () => {
+          window.close();
+        });
+
+      // 기기 변경 확인 다이얼로그 - 취소
+      document
+        .getElementById("confirmCancelBtn")
+        ?.addEventListener("click", () => {
+          document.getElementById("confirmDialog").classList.add("hidden");
+        });
+
+      // 기기 변경 확인 다이얼로그 - 계속 활성화 (confirm=true로 재요청)
+      document
+        .getElementById("confirmProceedBtn")
+        ?.addEventListener("click", async () => {
+          document.getElementById("confirmDialog").classList.add("hidden");
+          const email = emailInput.value.trim();
+          const licenseKey = licenseKeyInput.value.trim();
+          await doActivate(email, licenseKey, true);
+        });
+
+      // 경고 다이얼로그 버튼
+      document
+        .getElementById("warningCloseBtn")
+        ?.addEventListener("click", () => {
+          document.getElementById("warningDialog").classList.add("hidden");
+        });
+
+      document
+        .getElementById("warningCoupangBtn")
+        ?.addEventListener("click", () => {
+          chrome.tabs.create({ url: "https://www.coupang.com" });
           window.close();
         });
     </script>

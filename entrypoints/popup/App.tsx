@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react";
 import "./App.css";
-import {
-  getLicense,
-  isLicenseValid,
-  removeLicense,
-} from "@/modules/core/license-storage";
+import { getLicense } from "@/modules/core/license-storage";
 import type { LicenseInfo } from "@/types";
+import { MESSAGE_TYPE } from "@/types";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -18,13 +15,24 @@ function App() {
 
   async function checkLicenseStatus() {
     try {
-      const isValid = await isLicenseValid();
       const licenseData = await getLicense();
 
-      setHasValidLicense(isValid);
-      setLicense(licenseData);
+      if (!licenseData) {
+        setHasValidLicense(false);
+        setLicense(null);
+        return;
+      }
+
+      // 서버에 라이선스 유효성 검증
+      const result = await browser.runtime.sendMessage({
+        type: MESSAGE_TYPE.LICENSE_VALIDATE,
+      });
+
+      setHasValidLicense(result.ok);
+      setLicense(result.ok ? licenseData : null);
     } catch (error) {
       console.error("Failed to check license:", error);
+      setHasValidLicense(false);
     } finally {
       setLoading(false);
     }
@@ -36,22 +44,28 @@ function App() {
     window.close();
   }
 
-  async function handleRemoveLicense() {
+  async function handleLogout() {
     if (
       !confirm(
-        "라이선스를 삭제하시겠습니까?\n\n삭제 후 다시 활성화하려면 라이선스 키를 재입력해야 합니다.",
+        "로그아웃하시겠습니까?\n\n다른 기기에서 로그인할 수 있습니다.",
       )
     ) {
       return;
     }
 
     try {
-      await removeLicense();
-      // Refresh status
-      await checkLicenseStatus();
+      const response = await browser.runtime.sendMessage({
+        type: MESSAGE_TYPE.LICENSE_DEACTIVATE,
+      });
+
+      if (response.ok) {
+        await checkLicenseStatus();
+      } else {
+        alert(response.message || "로그아웃에 실패했습니다.");
+      }
     } catch (error) {
-      console.error("Failed to remove license:", error);
-      alert("라이선스 삭제에 실패했습니다.");
+      console.error("Failed to logout:", error);
+      alert("로그아웃에 실패했습니다.");
     }
   }
 
@@ -173,8 +187,8 @@ function App() {
         <button className="btn btn-secondary" onClick={openLicensePage}>
           라이선스 키 변경
         </button>
-        <button className="btn btn-danger" onClick={handleRemoveLicense}>
-          라이선스 삭제
+        <button className="btn btn-danger" onClick={handleLogout}>
+          로그아웃
         </button>
       </div>
       <div className="footer">v1.0 © 2026 쿠팡 지표 분석</div>

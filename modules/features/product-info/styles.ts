@@ -32,6 +32,12 @@ export function ensureHelloStyle() {
     .ct-prodinfo .ct-warn-tooltip::before{content:"";position:absolute;top:100%;right:48px;border:7px solid transparent;border-top-color:rgba(255,59,48,.55)}
     .ct-prodinfo .ct-warn-tooltip::after{content:"";position:absolute;top:100%;right:49px;border:6px solid transparent;border-top-color:rgba(100,15,15,.95)}
     .ct-price-warn:hover .ct-warn-tooltip{display:block}
+    .ct-unknown-sales{font-size:11px;font-weight:500;opacity:.7;white-space:nowrap}
+    .ct-info-icon{color:rgba(255,255,255,.5);cursor:help;font-size:12px;margin-left:3px;pointer-events:auto;position:relative}
+    .ct-info-tooltip{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);min-width:200px;padding:8px 10px;background:rgba(30,30,40,.95);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.85);z-index:999999;font-size:11px;font-weight:500;line-height:1.5;white-space:normal;border-radius:8px;pointer-events:none}
+    .ct-info-tooltip::before{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(255,255,255,.2)}
+    .ct-info-tooltip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:rgba(30,30,40,.95)}
+    .ct-info-icon:hover .ct-info-tooltip{display:block}
     @media (prefers-color-scheme: light){
       .ct-prodinfo .wrap{background:rgba(20,20,20,.84)}
       .ct-prodinfo .chip.pv{background:rgba(0,122,255,.14);color:#0a84ff;border-color:rgba(0,122,255,.35);text-shadow:none}

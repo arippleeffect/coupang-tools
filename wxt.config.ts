@@ -5,7 +5,7 @@ export default defineConfig({
   manifestVersion: 3,
   manifest: {
     name: "쿠팡 지표 분석",
-    version: "1.0.4",
+    version: "1.0.5",
     permissions: ["contextMenus", "cookies", "webNavigation", "storage"],
     host_permissions: ["https://wing.coupang.com/*"],
   },

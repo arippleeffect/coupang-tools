@@ -112,13 +112,7 @@ export async function fetchAndInjectProductInfo(pid: string) {
       validateOptionPrices(productId, vendorItemId, matched.salePrice).then(
         (priceValidation) => {
           if (priceValidation?.hasPriceDifference) {
-            // 가격 차이 발견 시 최저가 기준으로 재렌더링
-            const lowestTotalSales =
-              typeof matched.salesLast28d === "number"
-                ? formatCurrencyKRW(
-                    matched.salesLast28d * priceValidation.lowestPrice,
-                  )
-                : "-";
+            // 가격 차이 발견 시 매출 숨기고 재렌더링
             injectProductInfoAfterHeader({
               productId: String(pid),
               itemId: matched.itemId,
@@ -126,7 +120,7 @@ export async function fetchAndInjectProductInfo(pid: string) {
               pvLast28Day: matched?.pvLast28Day,
               salesLast28d: matched?.salesLast28d,
               rateText,
-              totalSales: lowestTotalSales,
+              totalSales: undefined,
               priceValidation,
             });
           }
@@ -169,9 +163,9 @@ export function setupLazyProductInfo() {
     // Show license checking loading first
     injectLicenseCheckingInfo();
 
-    // Check license (with 6-hour cache in background)
-    const hasLicense = await validateLicenseOnAction();
-    if (!hasLicense) {
+    // Check license (매 요청마다 서버 체크)
+    const licenseResult = await validateLicenseOnAction();
+    if (!licenseResult.valid) {
       await injectLicenseRequiredBanner();
       return;
     }
@@ -188,8 +182,8 @@ export function setupLazyProductInfo() {
       const curId = getIdFromLocation();
       if (!banner && curId) {
         injectLicenseCheckingInfo();
-        const hasLicense = await validateLicenseOnAction();
-        if (!hasLicense) {
+        const licenseResult = await validateLicenseOnAction();
+        if (!licenseResult.valid) {
           await injectLicenseRequiredBanner();
           return;
         }
@@ -206,8 +200,8 @@ export function setupLazyProductInfo() {
         const nid = getIdFromLocation();
         if (nid) {
           injectLicenseCheckingInfo();
-          const hasLicense = await validateLicenseOnAction();
-          if (!hasLicense) {
+          const licenseResult = await validateLicenseOnAction();
+          if (!licenseResult.valid) {
             await injectLicenseRequiredBanner();
             return;
           }

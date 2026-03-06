@@ -135,7 +135,7 @@ export function initMetricsStyle() {
   style.textContent = `
     .ct-metrics{display:block;max-width:100%;z-index:auto;pointer-events:none}
     .ct-metrics .wrap{position:relative;display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:12px;background:rgba(28,28,30,.82);box-shadow:0 8px 24px rgba(0,0,0,.25);color:#fff;backdrop-filter:saturate(140%) blur(10px);-webkit-backdrop-filter:saturate(140%) blur(10px);border:1px solid rgba(255,255,255,.12);pointer-events:auto;cursor:default;overflow:visible}
-    .ct-metrics .metric{display:flex;gap:8px;justify-content:space-between;align-items:baseline;font-size:12px;line-height:1.5}
+    .ct-metrics .metric{position:relative;display:flex;gap:8px;justify-content:space-between;align-items:baseline;font-size:12px;line-height:1.5}
     .ct-metrics .label{opacity:.8}
     .ct-metrics .value{font-weight:700;letter-spacing:-.01em}
     .ct-metrics .value.rate{font-variant-numeric:tabular-nums}
@@ -144,11 +144,17 @@ export function initMetricsStyle() {
     .ct-metrics .chip.sales{background:rgba(255,149,0,.34);color:#fff;border:1px solid rgba(255,149,0,.55);text-shadow:0 1px 0 rgba(0,0,0,.15)}
     .ct-metrics .chip.rate{background:rgba(52,199,89,.32);color:#fff;border:1px solid rgba(52,199,89,.55);text-shadow:0 1px 0 rgba(0,0,0,.15)}
     .ct-metrics .ct-metric-value-group{display:flex;align-items:baseline;gap:0}
-    .ct-metrics .ct-price-warn-icon{z-index:999999;color:#ff3b30;cursor:help;font-size:13px;margin-right:4px;pointer-events:auto}
-    .ct-warn-tooltip{display:none;position:absolute;bottom:78px;left:0;right:0;padding:10px 12px;background:rgba(100,15,15,.95);border:1px solid rgba(255,59,48,.55);color:#ffb3b3;z-index:999999;box-sizing:border-box;font-size:12px;font-weight:500;line-height:1.5;white-space:normal;border-radius:8px;pointer-events:none}
-    .ct-warn-tooltip::before{content:"";position:absolute;top:100%;right:48px;border:7px solid transparent;border-top-color:rgba(255,59,48,.55)}
-    .ct-warn-tooltip::after{content:"";position:absolute;top:100%;right:49px;border:6px solid transparent;border-top-color:rgba(100,15,15,.95)}
+    .ct-metrics .ct-price-warn-icon{position:relative;z-index:999999;color:#ff3b30;cursor:help;font-size:13px;margin-right:4px;pointer-events:auto}
+    .ct-warn-tooltip{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);min-width:200px;padding:10px 12px;background:rgba(100,15,15,.95);border:1px solid rgba(255,59,48,.55);color:#ffb3b3;z-index:999999;box-sizing:border-box;font-size:12px;font-weight:500;line-height:1.5;white-space:normal;border-radius:8px;pointer-events:none}
+    .ct-warn-tooltip::before{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:7px solid transparent;border-top-color:rgba(255,59,48,.55)}
+    .ct-warn-tooltip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(100,15,15,.95)}
     .ct-metrics .ct-price-warn-icon:hover .ct-warn-tooltip{display:block}
+    .ct-unknown-sales{font-size:11px;font-weight:500;opacity:.7;white-space:nowrap}
+    .ct-info-icon{color:rgba(255,255,255,.5);cursor:help;font-size:12px;margin-left:3px;pointer-events:auto}
+    .ct-info-tooltip{display:none;position:absolute;bottom:calc(100% + 8px);left:0;right:0;padding:8px 10px;background:rgba(30,30,40,.95);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.85);z-index:999999;font-size:11px;font-weight:500;line-height:1.5;white-space:normal;border-radius:8px;pointer-events:none}
+    .ct-info-tooltip::before{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(255,255,255,.2)}
+    .ct-info-tooltip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:rgba(30,30,40,.95)}
+    .ct-info-icon:hover .ct-info-tooltip{display:block}
     .ct-metrics .retry-btn{pointer-events:auto;position:relative;z-index:10;background:#2b6eff;color:#fff;font-size:12px;font-weight:600;padding:4px 10px;border:none;border-radius:6px;cursor:pointer}
     .ct-metrics .retry-btn:hover{background:#1f54c7}
     .ct-metrics .loading{display:flex;align-items:center;justify-content:center}
