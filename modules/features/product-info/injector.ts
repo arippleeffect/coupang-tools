@@ -81,13 +81,14 @@ export function injectProductInfoAfterHeader(info: {
         <span class="kv"><span class="label">옵션ID</span><span class="value">${info.itemId ?? "-"}</span></span>
         <span class="sep">·</span>
         <span class="kv"><span class="label">브랜드</span><span class="value">${brand}</span></span>
-        <span class="sep">·</span>
+      </div>
+      <div class="line">
         <span class="kv"><span class="label">조회</span><span class="value chip pv">${fmtInt(
           pv,
         )}</span></span>
         <span class="kv"><span class="label">판매<span class="ct-info-icon">&#9432;<span class="ct-info-tooltip">해당 판매량은 옵션별 판매량이 아닌<br>전체 옵션을 합산한 총 판매량임</span></span></span><span class="value chip sales">${fmtInt(
           sales,
-        )}</span></span>
+        )}개</span></span>
         <span class="kv"><span class="label">전환</span><span class="value chip rate">${rate}</span></span>
         <span class="kv"><span class="label">매출</span>${revenueDisplay}</span>
       </div>
@@ -222,8 +223,9 @@ export function injectEmptyProductInfo(): boolean {
   el.innerHTML = `
     <div class="wrap">
       <div class="line" style="justify-content:center;">
-        <span class="kv"><span class="label">⚠️ 상품 데이터가 없습니다</span></span>
+        <span class="kv"><span class="label">쿠팡에서 제공하지 않는 상품입니다</span></span>
       </div>
+      <div class="sub">일부 상품은 조회수·판매량 등의 지표가 제공되지 않을 수 있습니다</div>
     </div>
   `;
 
