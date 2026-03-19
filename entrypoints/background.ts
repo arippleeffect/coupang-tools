@@ -369,25 +369,34 @@ async function fetchPreMatchingSearch<T>({
   keyword: string | number;
 }): Promise<T> {
   const xsrf = decodeURIComponent(token);
-  const res = await fetch(
-    "https://wing.coupang.com/tenants/seller-web/pre-matching/search",
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-xsrf-token": xsrf,
+  let res: Response;
+  try {
+    res = await fetch(
+      "https://wing.coupang.com/tenants/seller-web/pre-matching/search",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-xsrf-token": xsrf,
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          keyword: String(keyword),
+          excludedProductIds: [],
+          searchPage: 0,
+          searchOrder: "DEFAULT",
+          sortType: "DEFAULT",
+        }),
       },
-      credentials: "include",
-      body: JSON.stringify({
-        keyword: String(keyword),
-        // TODO: 사용하는거 한번 확인
-        excludedProductIds: [],
-        searchPage: 0,
-        searchOrder: "DEFAULT",
-        sortType: "DEFAULT",
-      }),
-    },
-  );
+    );
+  } catch {
+    // CORS 에러 (세션 만료로 로그인 페이지 redirect 시 발생)
+    throw {
+      code: "NO_XSRF_TOKEN",
+      message: "새 탭에서 쿠팡윙 로그인을 해주세요",
+      error: "새 탭에서 쿠팡윙 로그인을 해주세요",
+    };
+  }
 
   if (!res.ok) {
     let bodyText = "";
