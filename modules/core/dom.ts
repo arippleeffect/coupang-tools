@@ -118,3 +118,32 @@ export function getIdFromLocation(): string | null {
     location.href.match(/\/products\/(\d+)/);
   return m ? m[1] : null;
 }
+
+/**
+ * itemId를 우선 대기하고, 없으면 productId 폴백
+ * @param maxWait - 최대 대기 시간 (밀리초)
+ * @param interval - 폴링 간격 (밀리초)
+ * @returns 상품 ID
+ */
+export async function getIdFromLocationAsync(
+  maxWait = 500,
+  interval = 50,
+): Promise<string | null> {
+  const itemId = new URL(location.href).searchParams.get("itemId");
+  if (itemId) return itemId;
+
+  // itemId가 아직 없으면 URL 업데이트를 대기
+  let elapsed = 0;
+  while (elapsed < maxWait) {
+    await new Promise((r) => setTimeout(r, interval));
+    elapsed += interval;
+    const id = new URL(location.href).searchParams.get("itemId");
+    if (id) return id;
+  }
+
+  // 최후의 수단: productId 폴백
+  const m =
+    location.pathname.match(/\/products\/(\d+)/) ||
+    location.href.match(/\/products\/(\d+)/);
+  return m ? m[1] : null;
+}
