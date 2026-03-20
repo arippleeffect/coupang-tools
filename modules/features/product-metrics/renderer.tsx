@@ -155,6 +155,7 @@ export function initMetricsStyle() {
     .ct-info-tooltip::before{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(255,255,255,.2)}
     .ct-info-tooltip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:rgba(30,30,40,.95)}
     .ct-info-icon:hover .ct-info-tooltip{display:block}
+    .ct-metrics .sub{width:100%;text-align:right;font-size:11px;opacity:.75;margin-top:2px}
     .ct-metrics .retry-btn{pointer-events:auto;position:relative;z-index:10;background:#10b981;color:#fff;font-size:12px;font-weight:600;padding:4px 10px;border:none;border-radius:6px;cursor:pointer}
     .ct-metrics .retry-btn:hover{background:#059669}
     .ct-metrics .loading{display:flex;align-items:center;justify-content:center}

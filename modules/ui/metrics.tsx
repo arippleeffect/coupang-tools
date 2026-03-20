@@ -62,7 +62,7 @@ export function Complete({ p }: { p: ProductState }) {
           </span>
         </span>
         <span className="value chip sales">
-          {p.data?.sales.toLocaleString()}
+          {p.data?.sales.toLocaleString()}개
         </span>
       </div>
       <div className="metric">
@@ -88,6 +88,7 @@ export function Complete({ p }: { p: ProductState }) {
           )}
         </span>
       </div>
+      <div className="sub">최근 28일 기준</div>
     </div>
   );
 }
@@ -129,7 +130,7 @@ export function Empty() {
   return (
     <div className="wrap" onClick={(e) => { e.stopPropagation(); e.preventDefault(); }} onDragStart={(e) => e.preventDefault()} draggable={false}>
       <div className="metric">
-        <span className="label">데이터 없음</span>
+        <span className="label">쿠팡에서 이 상품의<br />지표를 제공하지 않습니다</span>
       </div>
     </div>
   );

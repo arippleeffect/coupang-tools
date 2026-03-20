@@ -2,6 +2,7 @@ import {
   waitForElement,
   debounce,
   getIdFromLocation,
+  getIdFromLocationAsync,
   getVendorItemIdFromUrl,
   getProductIdFromPath,
 } from "@/modules/core/dom";
@@ -179,7 +180,7 @@ export function setupLazyProductInfo() {
 
     const ensure = debounce(async () => {
       const banner = root.querySelector(SELECTORS.CT_PRODINFO);
-      const curId = getIdFromLocation();
+      const curId = await getIdFromLocationAsync();
       if (!banner && curId) {
         injectLicenseCheckingInfo();
         const licenseResult = await validateLicenseOnAction();
@@ -197,7 +198,7 @@ export function setupLazyProductInfo() {
 
     const reMount = () =>
       setTimeout(async () => {
-        const nid = getIdFromLocation();
+        const nid = await getIdFromLocationAsync();
         if (nid) {
           injectLicenseCheckingInfo();
           const licenseResult = await validateLicenseOnAction();

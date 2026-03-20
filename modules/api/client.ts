@@ -53,13 +53,15 @@ export async function fetchSingleProduct(
   }
 
   const result = (response.data?.result as CoupangProduct[]) || [];
-  const matched = result.find((r) => String(r.itemId) === itemId);
+  const matched =
+    result.find((r) => String(r.itemId) === itemId) ||
+    result.find((r) => String(r.productId) === itemId);
 
   if (!matched) {
     throw {
       code: "EMPTY",
-      message: `No product found for itemId=${itemId}`,
-      error: `No product found for itemId=${itemId}`,
+      message: `No product found for id=${itemId}`,
+      error: `No product found for id=${itemId}`,
     };
   }
 

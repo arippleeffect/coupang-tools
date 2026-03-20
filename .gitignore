@@ -12,6 +12,10 @@ dist/
 .env
 .env.local
 .env.*.local
+.env.example
+
+# Scripts
+scripts/
 
 # IDE
 .vscode/
