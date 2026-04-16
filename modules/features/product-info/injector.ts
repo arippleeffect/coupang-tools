@@ -1,5 +1,6 @@
 import { SELECTORS } from "@/modules/constants/selectors";
 import type { PriceValidationResult } from "@/types";
+import "@/modules/ui/product-info.css";
 
 /**
  * 헤더 다음에 인사 배너 주입

@@ -142,6 +142,61 @@
   opacity: 0.4;
 }
 
+/* 가격 경고 + 툴팁 (싱글 페이지) */
+.ct-prodinfo .ct-price-warn {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+  pointer-events: auto;
+}
+
+.ct-prodinfo .ct-price-warn .ct-warn-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  transform: none;
+  width: 240px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: #fff;
+  background: rgba(100, 15, 15, 0.95);
+  border: 1px solid rgba(255, 59, 48, 0.55);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 999999;
+  white-space: normal;
+}
+
+.ct-prodinfo .ct-price-warn .ct-warn-tooltip::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: rgba(255, 59, 48, 0.55);
+}
+
+.ct-prodinfo .ct-price-warn .ct-warn-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(100, 15, 15, 0.95);
+}
+
+.ct-prodinfo .ct-price-warn:hover .ct-warn-tooltip {
+  display: block;
+}
+
 @media (prefers-color-scheme: light) {
   .ct-prodinfo .wrap {
     background: rgba(20, 20, 20, 0.84);
