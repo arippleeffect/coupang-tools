@@ -24,7 +24,17 @@ export async function fetchQuantityInfo(
     throw new Error(`quantity-info API failed: ${res.status}`);
   }
 
-  const json = await res.json();
+  const contentType = res.headers.get('content-type');
+  if (contentType && !contentType.includes('application/json')) {
+    throw new Error("서버 응답 오류가 발생했습니다");
+  }
+
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch {
+    throw new Error("서버 응답 오류가 발생했습니다");
+  }
 
   // 응답이 배열인 경우 첫 번째 요소 반환
   if (Array.isArray(json)) {
