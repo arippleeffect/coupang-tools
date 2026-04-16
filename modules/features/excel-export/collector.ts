@@ -58,7 +58,19 @@ export async function collectItems(
         break;
       }
 
-      const data = await res.json();
+      const contentType = res.headers.get('content-type');
+      if (contentType && !contentType.includes('application/json')) {
+        finishToast(false, results.length);
+        break;
+      }
+
+      let data: any;
+      try {
+        data = await res.json();
+      } catch {
+        finishToast(false, results.length);
+        break;
+      }
       const items = Array.isArray(data?.content) ? data.content : [];
 
       if (!items.length) {

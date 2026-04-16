@@ -60,8 +60,17 @@ async function callValidationAPI(license: LicenseInfo): Promise<LicenseCheckResu
       }),
     });
 
-    const data: LicenseCheckResult = await response.json();
-    return data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && !contentType.includes('application/json')) {
+      return { valid: false, reason: "INTERNAL_ERROR", message: "서버 응답 오류" };
+    }
+
+    try {
+      const data: LicenseCheckResult = await response.json();
+      return data;
+    } catch {
+      return { valid: false, reason: "INTERNAL_ERROR", message: "서버 응답 오류" };
+    }
   } catch (error) {
     console.error("[License Validator] API error:", error);
     return { valid: false, reason: "INTERNAL_ERROR", message: "네트워크 오류" };
@@ -468,6 +477,23 @@ async function fetchPreMatchingSearch<T>({
     );
   }
 
-  const json = await res.json();
-  return json;
+  const contentType = res.headers.get('content-type');
+  if (contentType && !contentType.includes('application/json')) {
+    throw {
+      code: "NO_XSRF_TOKEN",
+      message: "새 탭에서 쿠팡윙 로그인을 해주세요",
+      error: "새 탭에서 쿠팡윙 로그인을 해주세요",
+    };
+  }
+
+  try {
+    const json = await res.json();
+    return json;
+  } catch {
+    throw {
+      code: "NO_XSRF_TOKEN",
+      message: "새 탭에서 쿠팡윙 로그인을 해주세요",
+      error: "새 탭에서 쿠팡윙 로그인을 해주세요",
+    };
+  }
 }

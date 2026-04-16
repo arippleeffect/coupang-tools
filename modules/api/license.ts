@@ -52,6 +52,10 @@ export async function activateLicense(
       let errorCode = "REQUEST_FAILED";
 
       try {
+        const errorContentType = response.headers.get('content-type');
+        if (errorContentType && !errorContentType.includes('application/json')) {
+          throw new Error('Non-JSON response');
+        }
         const errorData = await response.json();
 
         if (response.status === 404) {
@@ -86,7 +90,16 @@ export async function activateLicense(
       };
     }
 
-    const data: {
+    const contentType = response.headers.get('content-type');
+    if (contentType && !contentType.includes('application/json')) {
+      return {
+        ok: false,
+        message: "서버 응답 오류가 발생했습니다",
+        error: "INVALID_RESPONSE",
+      };
+    }
+
+    let data: {
       success: boolean;
       error?: string;
       message?: string;
@@ -99,7 +112,16 @@ export async function activateLicense(
         deviceChangeCount: number;
         maxAllowed: number;
       };
-    } = await response.json();
+    };
+    try {
+      data = await response.json();
+    } catch {
+      return {
+        ok: false,
+        message: "서버 응답 오류가 발생했습니다",
+        error: "INVALID_RESPONSE",
+      };
+    }
 
     // 기기 변경 확인 필요
     if (!data.success && data.error === "DEVICE_CHANGE_CONFIRM") {
@@ -174,6 +196,10 @@ export async function deactivateLicense(
     if (!response.ok) {
       let errorMessage = "라이선스 비활성화에 실패했습니다.";
       try {
+        const errorContentType = response.headers.get('content-type');
+        if (errorContentType && !errorContentType.includes('application/json')) {
+          throw new Error('Non-JSON response');
+        }
         const errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
       } catch {
@@ -182,7 +208,17 @@ export async function deactivateLicense(
       return { ok: false, message: errorMessage, error: "DEACTIVATE_FAILED" };
     }
 
-    const data = await response.json();
+    const deactivateContentType = response.headers.get('content-type');
+    if (deactivateContentType && !deactivateContentType.includes('application/json')) {
+      return { ok: false, message: "서버 응답 오류가 발생했습니다", error: "INVALID_RESPONSE" };
+    }
+
+    let data: any;
+    try {
+      data = await response.json();
+    } catch {
+      return { ok: false, message: "서버 응답 오류가 발생했습니다", error: "INVALID_RESPONSE" };
+    }
     return {
       ok: true,
       message: data.message || "라이선스가 비활성화되었습니다.",
