@@ -515,7 +515,7 @@ async function fetchPreMatchingSearch<T>({
 
   throw {
     code: "PRE_MATCHING_SEARCH_FAILED",
-    message: "페이지를 새로고침 후 다시 시도해주세요.",
+    message: "요청이 많아 잠시 후 다시 시도해주세요.",
     error: "Max retries exceeded",
   };
 }
