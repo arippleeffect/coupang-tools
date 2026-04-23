@@ -428,72 +428,94 @@ async function fetchPreMatchingSearch<T>({
   token: string;
   keyword: string | number;
 }): Promise<T> {
-  const xsrf = decodeURIComponent(token);
-  let res: Response;
-  try {
-    res = await fetch(
-      "https://wing.coupang.com/tenants/seller-web/pre-matching/search",
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-xsrf-token": xsrf,
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          keyword: String(keyword),
-          excludedProductIds: [],
-          searchPage: 0,
-          searchOrder: "DEFAULT",
-          sortType: "DEFAULT",
-        }),
-      },
-    );
-  } catch {
-    // CORS 에러 (세션 만료로 로그인 페이지 redirect 시 발생)
-    throw {
-      code: "NO_XSRF_TOKEN",
-      message: "새 탭에서 쿠팡윙 로그인을 해주세요",
-      error: "새 탭에서 쿠팡윙 로그인을 해주세요",
-    };
-  }
+  const MAX_RETRIES = 10;
+  let currentToken = token;
 
-  if (!res.ok) {
-    let bodyText = "";
-    try {
-      bodyText = await res.text();
-    } catch (error) {
-      throw formatError(error, "PRE_MATCHING_SEARCH_FAILED");
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      // HTML 응답 후 쿠키에 갱신된 XSRF 토큰을 재취득
+      const fresh = await browser.cookies.get({
+        name: COUPANG_COOKIE_KEY.XSRF_TOKEN,
+        url: "https://wing.coupang.com",
+      });
+      currentToken = fresh?.value || currentToken;
     }
-    const message =
-      res.status === 429 ? "요청이 많아 서버가 잠시 응답을 제한했습니다." : "";
-    throw formatError(
-      {
+
+    const xsrf = decodeURIComponent(currentToken);
+    let res: Response;
+    try {
+      res = await fetch(
+        "https://wing.coupang.com/tenants/seller-web/pre-matching/search",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-xsrf-token": xsrf,
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            keyword: String(keyword),
+            excludedProductIds: [],
+            searchPage: 0,
+            searchOrder: "DEFAULT",
+            sortType: "DEFAULT",
+          }),
+        },
+      );
+    } catch {
+      // CORS 에러 (세션 만료로 로그인 페이지 redirect 시 발생)
+      throw {
+        code: "NO_XSRF_TOKEN",
+        message: "새 탭에서 쿠팡윙 로그인을 해주세요",
+        error: "새 탭에서 쿠팡윙 로그인을 해주세요",
+      };
+    }
+
+    if (!res.ok) {
+      let bodyText = "";
+      try {
+        bodyText = await res.text();
+      } catch (error) {
+        throw formatError(error, "PRE_MATCHING_SEARCH_FAILED");
+      }
+      const message =
+        res.status === 429 ? "요청이 많아 서버가 잠시 응답을 제한했습니다." : "";
+      throw formatError(
+        {
+          code: "PRE_MATCHING_SEARCH_FAILED",
+          message: `[${res.status}] 상품 검색 요청 실패:${message} \n\n 잠시 후 다시 시도해주세요`,
+          error: bodyText,
+        },
+        "PRE_MATCHING_SEARCH_FAILED",
+      );
+    }
+
+    const contentType = res.headers.get('content-type');
+    if (contentType && !contentType.includes('application/json')) {
+      // XSRF 토큰 만료로 HTML이 반환된 경우 → 재시도
+      if (attempt < MAX_RETRIES) continue;
+      throw {
         code: "PRE_MATCHING_SEARCH_FAILED",
-        message: `[${res.status}] 상품 검색 요청 실패:${message} \n\n 잠시 후 다시 시도해주세요`,
-        error: bodyText,
-      },
-      "PRE_MATCHING_SEARCH_FAILED",
-    );
+        message: "요청이 많아 잠시 후 다시 시도해주세요.",
+        error: "Unexpected non-JSON response",
+      };
+    }
+
+    try {
+      return await res.json() as T;
+    } catch {
+      if (attempt < MAX_RETRIES) continue;
+      throw {
+        code: "PRE_MATCHING_SEARCH_FAILED",
+        message: "요청이 많아 잠시 후 다시 시도해주세요.",
+        error: "JSON parse failed",
+      };
+    }
   }
 
-  const contentType = res.headers.get('content-type');
-  if (contentType && !contentType.includes('application/json')) {
-    throw {
-      code: "NO_XSRF_TOKEN",
-      message: "새 탭에서 쿠팡윙 로그인을 해주세요",
-      error: "새 탭에서 쿠팡윙 로그인을 해주세요",
-    };
-  }
-
-  try {
-    const json = await res.json();
-    return json;
-  } catch {
-    throw {
-      code: "NO_XSRF_TOKEN",
-      message: "새 탭에서 쿠팡윙 로그인을 해주세요",
-      error: "새 탭에서 쿠팡윙 로그인을 해주세요",
-    };
-  }
+  throw {
+    code: "PRE_MATCHING_SEARCH_FAILED",
+    message: "페이지를 새로고침 후 다시 시도해주세요.",
+    error: "Max retries exceeded",
+  };
 }
